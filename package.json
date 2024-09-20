@@ -1,0 +1,27 @@
+{
+  "name": "webrtc",
+  "version": "1.0.0",
+  "description": "WebRTC",
+  "main": "main.js",
+  "scripts": {
+    "start": "node server.js",
+    "electron": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "express": "^4.21.0",
+    "mongoose": "^8.6.2",
+    "nodemailer": "^6.9.15",
+    "simple-peer": "^9.11.1",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5"
+  },
+  "devDependencies": {
+    "electron": "^32.1.0",
+    "nodemon": "^3.1.4"
+  }
+}
