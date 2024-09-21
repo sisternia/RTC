@@ -1,13 +1,22 @@
 // \webrtc\server.js
 
 const express = require('express');
-const http = require('http');
+const https = require('https'); // Sử dụng https thay vì http
+const fs = require('fs'); // Để đọc các file chứng chỉ SSL
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth'); // Import route xác thực người dùng
 
 const app = express();
-const server = http.createServer(app);
+
+// Đọc các file chứng chỉ SSL do OpenSSL tạo
+const options = {
+    key: fs.readFileSync('ssl/key.pem'),
+    cert: fs.readFileSync('ssl/cert.pem')
+};
+
+// Tạo server HTTPS
+const server = https.createServer(options, app);
 const io = socketIo(server);
 
 app.use(express.static('public')); // Sử dụng thư mục 'public' để phục vụ các file tĩnh
@@ -154,6 +163,6 @@ function getRooms() {
 
 // Khởi động server tại cổng 3000
 server.listen(3000, () => {
-    console.log('Server đang chạy tại: http://localhost:3000/login.html');
+    console.log('Server đang chạy tại: https://localhost:3000/login.html');
 });
 

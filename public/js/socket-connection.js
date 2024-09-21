@@ -1,6 +1,6 @@
 // \webrtc\public\js\socket-connection.js
 
-const socket = io('http://localhost:3000');
+const socket = io('https://localhost:3000');
 
 // Khi một người dùng tham gia
 socket.on('user-ready', (data) => {

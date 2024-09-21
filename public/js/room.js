@@ -16,7 +16,7 @@ if (!username) {
 }
 
 // Tạo kết nối với server qua Socket.io
-const socket = io('http://localhost:3000');
+const socket = io('https://localhost:3000');
 
 // Sự kiện tạo phòng
 createRoomButton.addEventListener('click', () => {

@@ -1,3 +1,4 @@
+// \web\main.js
 const { app, BrowserWindow, session } = require('electron');
 const path = require('path');
 const os = require('os');
@@ -8,6 +9,9 @@ const userDataPath2 = path.join(os.homedir(), 'MyElectronAppData_Client2');
 
 let mainWindow1;
 let mainWindow2;
+
+// Bỏ qua các lỗi chứng chỉ tự ký
+app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
 
 function createWindow(clientNumber) {
     const userDataPath = clientNumber === 1 ? userDataPath1 : userDataPath2;
@@ -25,8 +29,11 @@ function createWindow(clientNumber) {
         },
     });
 
-    mainWindow.loadURL('http://localhost:3000/login.html');
+    // Thay đổi địa chỉ IP từ 'localhost' thành '192.168.1.4'
+    mainWindow.loadURL('https://localhost:3000/login.html');
 
+    mainWindow.webContents.openDevTools();
+    
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
@@ -54,3 +61,4 @@ app.on('activate', function () {
         mainWindow2 = createWindow(2);
     }
 });
+
