@@ -2,10 +2,14 @@
 
 const socket = io('https://localhost:3000');
 
-// Khi một người dùng tham gia
+// Khi nhận sự kiện 'user-ready', lưu tên người dùng của chính Client vào socket.username
 socket.on('user-ready', (data) => {
-    if (data.userId === socket.id) return;
+    if (data.userId === socket.id) {
+        socket.username = data.username; // Lưu tên người dùng hiện tại
+        return;
+    }
 
+    // Phần còn lại giữ nguyên như trước
     const peer = new SimplePeer({
         initiator: true, // Người dùng này là người khởi tạo kết nối
         trickle: false,  // Truyền tín hiệu từng bước (trickle) không được sử dụng
@@ -22,6 +26,7 @@ socket.on('user-ready', (data) => {
 
     peers[data.userId] = peer; // Lưu đối tượng peer vào danh sách các peer
 });
+
 
 // Khi nhận tín hiệu từ người dùng khác
 socket.on('signal', data => {
@@ -75,26 +80,6 @@ socket.on('toggle-camera', (data) => {
 // Khi người dùng bật/tắt microphone
 socket.on('toggle-mic', (data) => {
     console.log(`Người dùng ${data.username} đã ${data.micEnabled ? 'bật' : 'tắt'} microphone của họ.`);
-});
-
-// Khi nhận tin nhắn âm thanh
-socket.on('audio-message', (data) => {
-    const audioContainer = document.createElement('div');
-    audioContainer.style.marginBottom = '10px';
-
-    const senderInfo = document.createElement('div');
-    senderInfo.textContent = `${data.from}:`;
-    senderInfo.style.fontWeight = 'bold';
-
-    const audioElement = document.createElement('audio');
-    audioElement.src = `data:audio/webm;base64,${data.audio}`; // Dữ liệu âm thanh được truyền dưới dạng base64
-    audioElement.controls = true;
-
-    audioContainer.appendChild(senderInfo);
-    audioContainer.appendChild(audioElement);
-    messages.appendChild(audioContainer);
-
-    messages.scrollTop = messages.scrollHeight;  // Tự động cuộn xuống dưới cùng
 });
 
 // Cập nhật danh sách người dùng trong phòng

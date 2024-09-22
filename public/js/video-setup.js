@@ -1,5 +1,7 @@
 // \webrtc\public\js\video-setup.js
 
+const { ipcRenderer } = require('electron');
+
 let localStream;
 let cameraStream;
 let screenStream;
@@ -28,33 +30,32 @@ function createDummyVideoStream() {
 // Hàm khởi tạo stream media
 async function initMedia() {
     try {
-        // Thử truy cập webcam và micro của người dùng
+        // Truy cập webcam và micro của người dùng
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         setupStreams(stream);
     } catch (error) {
-        console.error('Lỗi khi truy cập thiết bị media.', error);
+        console.error('Lỗi khi truy cập thiết bị media:', error);
 
-        // Xử lý các lỗi cụ thể
         switch (error.name) {
             case 'NotReadableError':
-            case 'TrackStartError':
-            case 'OverconstrainedError':
+                alert('Webcam hoặc micro đang được ứng dụng khác sử dụng. Vui lòng kiểm tra và đóng ứng dụng đó.');
+                break;
             case 'NotAllowedError':
-                // Webcam đã được sử dụng hoặc quyền truy cập bị từ chối
-                await handleCameraUnavailable();
+                alert('Bạn đã từ chối quyền truy cập vào webcam hoặc micro. Vui lòng cấp quyền.');
                 break;
             case 'NotFoundError':
-            case 'DevicesNotFoundError':
-                // Không tìm thấy webcam
-                await handleNoCamera();
+                alert('Không tìm thấy thiết bị media. Vui lòng kiểm tra thiết bị của bạn.');
                 break;
             default:
-                // Các lỗi khác
-                await handleNoMedia();
-                break;
+                alert('Lỗi không xác định. Vui lòng thử lại.');
         }
+
+        // Nếu xảy ra lỗi, dùng video giả thay thế
+        const dummyVideoStream = createDummyVideoStream();
+        setupStreams(dummyVideoStream);
     }
 }
+
 
 // Xử lý khi không thể sử dụng camera hoặc đang được sử dụng
 async function handleCameraUnavailable() {
@@ -105,6 +106,80 @@ function setupStreams(stream) {
     localVideo.srcObject = localStream;
     socket.emit('ready', { username, roomId });
 }
+
+// Bắt đầu chia sẻ màn hình
+document.getElementById('toggleDisplay').addEventListener('click', async () => {
+    if (!screenStream) {
+        try {
+            // Lấy danh sách các nguồn từ main process
+            const inputSources = await ipcRenderer.invoke('get-sources');
+
+            // Hiển thị hộp thoại lựa chọn nguồn
+            const source = inputSources[0]; // Ví dụ: luôn chọn nguồn đầu tiên (bạn có thể hiển thị danh sách và chọn)
+
+            // Sử dụng nguồn đã chọn để lấy stream
+            screenStream = await navigator.mediaDevices.getUserMedia({
+                audio: false,
+                video: {
+                    mandatory: {
+                        chromeMediaSource: 'desktop',
+                        chromeMediaSourceId: source.id,
+                        minWidth: 1280,
+                        maxWidth: 1280,
+                        minHeight: 720,
+                        maxHeight: 720
+                    }
+                }
+            });
+
+            const screenTrack = screenStream.getVideoTracks()[0];
+
+            // Thay thế video track của camera bằng track của màn hình
+            const sender = localStream.getVideoTracks()[0];
+            localStream.removeTrack(sender);
+            localStream.addTrack(screenTrack);
+
+            screenTrack.onended = () => {
+                // Khi dừng chia sẻ màn hình, quay lại camera
+                localStream.removeTrack(screenTrack);
+                localStream.addTrack(cameraStream.getVideoTracks()[0]);
+                screenStream = null;
+                localVideo.srcObject = localStream;
+                localVideo.classList.remove('screen-video');
+
+                Object.values(peers).forEach(peer => {
+                    const videoSender = peer._pc.getSenders().find(s => s.track.kind === 'video');
+                    videoSender.replaceTrack(cameraStream.getVideoTracks()[0]);
+                });
+            };
+
+            localVideo.srcObject = localStream;
+            localVideo.classList.add('screen-video');
+
+            // Gửi lại stream mới tới các peer
+            Object.values(peers).forEach(peer => {
+                const videoSender = peer._pc.getSenders().find(s => s.track.kind === 'video');
+                videoSender.replaceTrack(screenTrack);
+            });
+
+        } catch (error) {
+            console.error('Lỗi khi chia sẻ màn hình:', error);
+        }
+    } else {
+        // Dừng chia sẻ màn hình và quay lại camera
+        screenStream.getTracks().forEach(track => track.stop());
+        screenStream = null;
+        localStream.removeTrack(localStream.getVideoTracks()[0]);
+        localStream.addTrack(cameraStream.getVideoTracks()[0]);
+        localVideo.srcObject = localStream;
+        localVideo.classList.remove('screen-video');
+
+        Object.values(peers).forEach(peer => {
+            const videoSender = peer._pc.getSenders().find(s => s.track.kind === 'video');
+            videoSender.replaceTrack(cameraStream.getVideoTracks()[0]);
+        });
+    }
+});
 
 // Khởi tạo media
 initMedia();
@@ -186,56 +261,5 @@ function addRemoteVideo(userId, username, stream) {
     remoteVideos.appendChild(videoContainer);
 }
 
-// Bắt đầu chia sẻ màn hình
-document.getElementById('toggleDisplay').addEventListener('click', () => {
-    if (!screenStream) {
-        navigator.mediaDevices.getDisplayMedia({ video: true }).then(stream => {
-            screenStream = stream;
-            const screenTrack = screenStream.getVideoTracks()[0];
 
-            // Thay thế video track của camera bằng track của màn hình
-            const sender = localStream.getVideoTracks()[0];
-            localStream.removeTrack(sender);
-            localStream.addTrack(screenTrack);
 
-            screenTrack.onended = () => {
-                // Khi dừng chia sẻ màn hình, quay lại camera
-                localStream.removeTrack(screenTrack);
-                localStream.addTrack(cameraStream.getVideoTracks()[0]);
-                screenStream = null;
-                localVideo.srcObject = localStream;
-                localVideo.classList.remove('screen-video'); // Gỡ bỏ lớp CSS khi quay lại camera
-
-                Object.values(peers).forEach(peer => {
-                    const videoSender = peer._pc.getSenders().find(s => s.track.kind === 'video');
-                    videoSender.replaceTrack(cameraStream.getVideoTracks()[0]);
-                });
-            };
-
-            localVideo.srcObject = localStream;
-            localVideo.classList.add('screen-video'); // Thêm lớp CSS cho video màn hình
-
-            // Gửi lại stream mới tới các peer
-            Object.values(peers).forEach(peer => {
-                const videoSender = peer._pc.getSenders().find(s => s.track.kind === 'video');
-                videoSender.replaceTrack(screenTrack);
-            });
-
-        }).catch(err => {
-            console.error('Lỗi khi chia sẻ màn hình:', err);
-        });
-    } else {
-        // Dừng chia sẻ màn hình và quay lại camera
-        screenStream.getTracks().forEach(track => track.stop());
-        screenStream = null;
-        localStream.removeTrack(localStream.getVideoTracks()[0]);
-        localStream.addTrack(cameraStream.getVideoTracks()[0]);
-        localVideo.srcObject = localStream;
-        localVideo.classList.remove('screen-video'); // Gỡ bỏ lớp CSS khi quay lại camera
-
-        Object.values(peers).forEach(peer => {
-            const videoSender = peer._pc.getSenders().find(s => s.track.kind === 'video');
-            videoSender.replaceTrack(cameraStream.getVideoTracks()[0]);
-        });
-    }
-});

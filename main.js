@@ -1,9 +1,9 @@
 // \web\main.js
-const { app, BrowserWindow, session } = require('electron');
+const { app, BrowserWindow, ipcMain, session } = require('electron');
 const path = require('path');
 const os = require('os');
+const { desktopCapturer } = require('electron');
 
-// Tạo 2 đường dẫn dữ liệu khác nhau cho mỗi cửa sổ
 const userDataPath1 = path.join(os.homedir(), 'MyElectronAppData_Client1');
 const userDataPath2 = path.join(os.homedir(), 'MyElectronAppData_Client2');
 
@@ -16,7 +16,6 @@ app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
 function createWindow(clientNumber) {
     const userDataPath = clientNumber === 1 ? userDataPath1 : userDataPath2;
     
-    // Thiết lập đường dẫn userData riêng cho mỗi client
     app.setPath('userData', userDataPath);
 
     let mainWindow = new BrowserWindow({
@@ -25,11 +24,11 @@ function createWindow(clientNumber) {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            session: session.fromPartition(`persist:client${clientNumber}`),  // Tạo session riêng
+            enableRemoteModule: true,
         },
     });
 
-    // Thay đổi địa chỉ IP từ 'localhost' thành '192.168.1.4'
+    // Load trang login
     mainWindow.loadURL('https://localhost:3000/login.html');
 
     mainWindow.webContents.openDevTools();
@@ -61,4 +60,12 @@ app.on('activate', function () {
         mainWindow2 = createWindow(2);
     }
 });
+
+// Lắng nghe yêu cầu từ renderer để chia sẻ màn hình
+ipcMain.handle('get-sources', async (event) => {
+    // Lấy danh sách nguồn màn hình và cửa sổ
+    const inputSources = await desktopCapturer.getSources({ types: ['window', 'screen'] });
+    return inputSources;
+});
+
 

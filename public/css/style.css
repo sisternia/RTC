@@ -1,5 +1,6 @@
 /* \webrtc\public\css\style.css */
-/* Body styling: cấu trúc chính của giao diện */
+/* ========== Body Styling ========== */
+/* Cấu trúc chính của giao diện */
 body {
     display: flex;
     justify-content: space-between;
@@ -10,7 +11,8 @@ body {
     overflow: hidden;
 }
 
-/* Video container styling: chứa video chính và các video khác */
+/* ========== Video Container ========== */
+/* Chứa video chính và các video khác */
 #video-container {
     flex: 1;
     padding: 5px;
@@ -20,7 +22,7 @@ body {
     overflow: hidden;
 }
 
-/* Video streams container: chứa tất cả các video trong giao diện */
+/* Chứa tất cả các video trong giao diện */
 #video-streams {
     display: flex;
     gap: 10px;
@@ -29,7 +31,7 @@ body {
     overflow: hidden;
 }
 
-/* Main video box styling: video chính của người dùng */
+/* Video chính của người dùng */
 .main-video-box {
     flex: 2.5;
     position: relative;
@@ -43,7 +45,7 @@ body {
     max-height: 100%;
 }
 
-/* Secondary video box styling: chứa các video khác */
+/* Chứa các video khác */
 .secondary-video-box {
     flex: 0.5;
     position: relative;
@@ -57,14 +59,21 @@ body {
     max-height: 100%;
 }
 
-/* General video styling: cho tất cả các video */
+/* ========== Video Styling ========== */
+/* General video styling cho tất cả các video */
 video {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-/* User label styling: hiển thị nhãn người dùng (e.g., tên người dùng) */
+/* Đảm bảo video của màn hình chia sẻ hiển thị đầy đủ */
+.screen-video {
+    object-fit: contain;
+}
+
+/* ========== User Label Styling ========== */
+/* Hiển thị nhãn người dùng (e.g., tên người dùng) */
 .user-label {
     position: absolute;
     top: 10px;
@@ -76,7 +85,8 @@ video {
     font-size: 14px;
 }
 
-/* Control buttons: nút điều khiển video như bật/tắt camera, mic, thoát phòng */
+/* ========== Control Buttons ========== */
+/* Nút điều khiển video như bật/tắt camera, mic, thoát phòng */
 #controls {
     display: flex;
     justify-content: center;
@@ -84,7 +94,8 @@ video {
     padding: 10px 0;
 }
 
-/* Chat container: chứa khu vực chat và danh sách người dùng */
+/* ========== Chat and User List Container ========== */
+/* Chứa khu vực chat và danh sách người dùng */
 #chat-container {
     width: 350px;
     border-left: 1px solid #ccc;
@@ -95,7 +106,8 @@ video {
     height: 100vh;
 }
 
-/* Chat header: chứa các nút chuyển đổi giữa chat và danh sách người dùng */
+/* ========== Chat Header ========== */
+/* Chứa các nút chuyển đổi giữa chat và danh sách người dùng */
 #chat-header {
     display: flex;
     justify-content: space-between;
@@ -106,7 +118,8 @@ video {
     flex: 1;
 }
 
-/* Messages container: khu vực hiển thị tin nhắn */
+/* ========== Messages Container ========== */
+/* Khu vực hiển thị tin nhắn */
 #messages {
     height: calc(100% - 150px);
     overflow-y: auto;
@@ -117,7 +130,33 @@ video {
     white-space: pre-wrap; /* Bảo toàn ký tự dòng mới */
 }
 
-/* User list container: chứa danh sách người dùng */
+/* Styling cho từng block tin nhắn */
+#messages div {
+    margin-bottom: 10px; /* Tạo khoảng cách giữa các tin nhắn */
+}
+
+/* Styling cho tên người gửi */
+#messages strong {
+    display: block;
+}
+
+/* Styling cho nội dung tin nhắn */
+#messages p {
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    white-space: pre-wrap; /* Bảo toàn dòng mới (newline) trong tin nhắn */
+    color: #333;
+}
+
+/* Tin nhắn hệ thống */
+#messages .system-message {
+    color: gray;
+    font-style: italic;
+}
+
+/* ========== User List Container ========== */
+/* Chứa danh sách người dùng */
 #user-list {
     height: calc(100% - 150px);
     overflow-y: auto;
@@ -127,7 +166,8 @@ video {
     display: none; /* Ẩn mặc định */
 }
 
-/* Chat controls: nút gửi tin nhắn, bắt đầu ghi âm */
+/* ========== Chat Controls ========== */
+/* Nút gửi tin nhắn, bắt đầu ghi âm */
 #chat-controls {
     display: flex;
     align-items: center;
@@ -135,7 +175,7 @@ video {
     margin-top: 10px;
 }
 
-/* Message input styling: ô nhập tin nhắn */
+/* Ô nhập tin nhắn */
 #messageInput {
     flex: 1;
     padding: 5px;
@@ -143,7 +183,7 @@ video {
     resize: none; /* Ngăn người dùng thay đổi kích thước của textarea */
 }
 
-/* Send message and start recording buttons */
+/* Nút gửi tin nhắn và bắt đầu ghi âm */
 #sendMessage, #startRecording {
     display: flex;
     align-items: center;
@@ -151,32 +191,8 @@ video {
     padding: 5px 10px;
 }
 
-/* Styling for each message block */
-#messages div {
-    margin-bottom: 10px; /* Tạo khoảng cách giữa các tin nhắn */
-}
-
-/* Styling for username: đảm bảo tên người gửi nằm trên dòng riêng */
-#messages strong {
-    display: block;
-}
-
-/* Styling for message text: đảm bảo nội dung tin nhắn xuống dòng đúng cách */
-#messages p {
-    margin: 0;
-    padding: 0;
-    font-size: 14px;
-    white-space: pre-wrap; /* Bảo toàn dòng mới (newline) trong tin nhắn */
-    color: #333;
-}
-
-/* System message styling: dùng cho các tin nhắn hệ thống */
-#messages .system-message {
-    color: gray;
-    font-style: italic;
-}
-
-/* Pin icon styling: nút ghim video */
+/* ========== Pin Icon Styling ========== */
+/* Nút ghim video */
 .pin-icon {
     position: absolute;
     top: 50%;
@@ -194,7 +210,3 @@ video {
     opacity: 1;
 }
 
-/* Screen share video: đảm bảo video của màn hình chia sẻ hiển thị đầy đủ */
-.screen-video {
-    object-fit: contain;
-}
