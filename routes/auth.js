@@ -118,6 +118,27 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// Route xử lý lấy thông tin người dùng
+router.get('/user-info', async (req, res) => {
+    const { username } = req.query;
+
+    try {
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.json({ success: false, message: 'User not found' });
+        }
+
+        res.json({
+            success: true,
+            user: {
+                username: user.username,
+                email: user.email
+            }
+        });
+    } catch (error) {
+        res.json({ success: false, message: 'Error fetching user info' });
+    }
+});
 
 // Route xử lý quên mật khẩu
 router.post('/reset-password', async (req, res) => {

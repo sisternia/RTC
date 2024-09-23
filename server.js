@@ -30,8 +30,9 @@ mongoose.connect('mongodb://localhost:27017/webrtc', {
     .then(() => console.log('Đã kết nối thành công với MongoDB'))
     .catch((err) => console.log('Lỗi kết nối đến MongoDB:', err));
 
-// Sử dụng route để đăng ký và đăng nhập
+// Sử dụng route để đăng ký, đăng nhập, lấy thông tin người dùng
 app.use('/', authRoutes);
+app.get('/user-info', authRoutes);
 
 // Logic cho Socket
 let users = {}; // Danh sách các người dùng kết nối với roomId

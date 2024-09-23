@@ -21,6 +21,7 @@ Cấu trúc
 |   |-- reset_pass.html
 |   |-- room.html
 |   |-- verify.html
+|-- /ssl
 |-- /routes
 |   |-- auth.js
 |-- main.js

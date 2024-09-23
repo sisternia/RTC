@@ -6,6 +6,9 @@ const roomNameInput = document.getElementById('roomName');
 const roomTableBody = document.getElementById('roomTableBody');
 const usernameDisplay = document.getElementById('usernameDisplay');
 const logoutButton = document.getElementById('logoutButton');
+const userInfoButton = document.getElementById('userInfoButton');
+const modalUsername = document.getElementById('modalUsername');
+const modalEmail = document.getElementById('modalEmail');
 
 // Lấy username từ localStorage
 const username = localStorage.getItem('username');
@@ -45,11 +48,11 @@ socket.on('room-list', (rooms) => {
     rooms.forEach(room => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td style="text-align: center;">${room.roomId}</td>
-            <td style="text-align: center;">${room.roomName}</td>
-            <td style="text-align: center;">${room.username}</td>
-            <td style="text-align: center;">${room.users}</td>
-            <td style="text-align: center;"><button class="btn btn-primary" onclick="joinRoom(${room.roomId})">Vào phòng</button></td>
+            <td style="text-align: center; vertical-align: middle;">${room.roomId}</td>
+            <td style="text-align: center; vertical-align: middle;">${room.roomName}</td>
+            <td style="text-align: center; vertical-align: middle;">${room.username}</td>
+            <td style="text-align: center; vertical-align: middle;">${room.users}</td>
+            <td style="text-align: center; vertical-align: middle;"><button class="btn btn-primary" onclick="joinRoom(${room.roomId})">Vào phòng</button></td>
         `;
         roomTableBody.appendChild(row);
     });
@@ -69,3 +72,22 @@ logoutButton.addEventListener('click', () => {
     localStorage.removeItem('username'); // Xóa username khỏi localStorage
     window.location.href = 'login.html'; // Chuyển về trang đăng nhập
 });
+
+// Sự kiện hiển thị thông tin người dùng
+userInfoButton.addEventListener('click', async () => {
+    try {
+        const response = await fetch(`/user-info?username=${username}`);
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('modalUsername').value = data.user.username;
+            document.getElementById('modalEmail').value = data.user.email;
+            const userInfoModal = new bootstrap.Modal(document.getElementById('userInfoModal'));
+            userInfoModal.show(); // Hiển thị modal với thông tin người dùng
+        } else {
+            alert('Không thể lấy thông tin người dùng');
+        }
+    } catch (error) {
+        alert('Lỗi khi lấy thông tin người dùng: ' + error.message);
+    }
+});
+
