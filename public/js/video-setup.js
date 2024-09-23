@@ -130,7 +130,7 @@ function setupStreams(stream) {
     socket.emit('ready', { username, roomId });
 }
 
-// Hàm đổi chỗ video giữa bạn và user khác
+// Hàm hoán đổi video giữa người dùng và người khác
 function swapVideos(userId) {
     const mainVideoBox = document.querySelector('.main-video-box');
     const mainVideoElement = mainVideoBox.querySelector('video');
@@ -160,6 +160,35 @@ document.addEventListener('click', (event) => {
         const videoContainer = event.target.closest('.video-box');
         const userId = videoContainer.id.split('-')[2]; // Lấy userId từ ID của video container
         swapVideos(userId);
+    }
+});
+
+// Hàm đổi video về video của chính bản thân nếu video đang ghim ngắt kết nối
+function restoreLocalVideo() {
+    const mainVideoBox = document.querySelector('.main-video-box');
+    const mainVideoElement = mainVideoBox.querySelector('video');
+    const mainUserLabel = mainVideoBox.querySelector('.user-label');
+
+    // Đổi video trở lại video của chính bản thân
+    mainVideoElement.srcObject = localStream;
+    mainUserLabel.textContent = 'You';
+
+    pinnedVideoId = null; // Reset trạng thái ghim
+}
+
+// Lắng nghe sự kiện người dùng ngắt kết nối
+socket.on('user-disconnected', (disconnectedUserId) => {
+    console.log(`Người dùng ${disconnectedUserId} đã thoát`);
+
+    // Kiểm tra nếu người thoát là người đang ghim video
+    if (pinnedVideoId === disconnectedUserId) {
+        restoreLocalVideo(); // Đưa video của chính người dùng về lại khung chính
+    }
+
+    // Xóa video của người dùng đã ngắt kết nối khỏi giao diện
+    const videoContainer = document.getElementById(`video-container-${disconnectedUserId}`);
+    if (videoContainer) {
+        videoContainer.remove();
     }
 });
 
