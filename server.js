@@ -52,6 +52,8 @@ io.on('connection', (socket) => {
         rooms[roomId].users += 1;
 
         socket.join(roomId); // Tham gia vào roomId tương ứng
+        console.log(`${username} đã tham gia phòng ${roomId}`);
+
         io.to(roomId).emit('user-ready', { userId: socket.id, username: socket.username });
         io.to(roomId).emit('message', { from: 'System', text: `${socket.username} đã kết nối.` });
 
@@ -65,6 +67,7 @@ io.on('connection', (socket) => {
     // Tạo phòng mới
     socket.on('create-room', (data) => {
         rooms[data.roomId] = { roomName: data.roomName, creator: data.username, users: 0 };
+        console.log(`Phòng ${data.roomName} đã được tạo bởi ${data.username}`);
         io.emit('room-list', getRooms()); // Gửi danh sách phòng đến tất cả người dùng
     });
 
@@ -105,6 +108,7 @@ io.on('connection', (socket) => {
             cameraEnabled: cameraEnabled,
             username: socket.username // Gửi username để hiển thị
         });
+        console.log(`${socket.username} đã ${cameraEnabled ? 'bật' : 'tắt'} camera`);
     });
 
     // Xử lý việc bật/tắt microphone
@@ -114,6 +118,7 @@ io.on('connection', (socket) => {
             micEnabled: micEnabled,
             username: socket.username // Gửi username để hiển thị
         });
+        console.log(`${socket.username} đã ${micEnabled ? 'bật' : 'tắt'} microphone`);
     });
 
     // Xử lý người dùng rời khỏi phòng
@@ -126,6 +131,7 @@ io.on('connection', (socket) => {
             }
         }
         socket.leave(roomId);
+        console.log(`${socket.username} đã rời khỏi phòng ${roomId}`);
         delete users[socket.id]; // Xóa người dùng khỏi danh sách
         io.to(roomId).emit('message', { from: 'System', text: `${socket.username} đã rời khỏi phòng.` });
         io.emit('room-list', getRooms()); // Cập nhật danh sách phòng
@@ -165,4 +171,5 @@ function getRooms() {
 server.listen(3000, () => {
     console.log('Server đang chạy tại: https://localhost:3000/login.html');
 });
+
 
