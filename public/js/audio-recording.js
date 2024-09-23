@@ -4,13 +4,20 @@ let lastAudioTime = '';   // Biến lưu trữ thời gian của tin nhắn âm 
 
 startRecordingButton.addEventListener('click', () => {
     const isRecording = startRecordingButton.getAttribute('data-recording') === 'true';
+    
     if (!isRecording) {
+        // Bắt đầu ghi âm - đổi nút thành màu đỏ
         startRecordingButton.innerHTML = '<i class="bi bi-record2"></i>';
         startRecordingButton.setAttribute('data-recording', 'true');
+        startRecordingButton.classList.remove('btn-outline-primary'); // Xóa lớp màu nguyên bản
+        startRecordingButton.classList.add('btn-danger'); // Thêm lớp màu đỏ
         startAudioRecording();
     } else {
+        // Dừng ghi âm - trả nút về màu bình thường
         startRecordingButton.innerHTML = '<i class="bi bi-record"></i>';
         startRecordingButton.setAttribute('data-recording', 'false');
+        startRecordingButton.classList.remove('btn-danger'); // Xóa lớp màu đỏ
+        startRecordingButton.classList.add('btn-outline-primary'); // Thêm lớp màu nguyên bản
         stopAudioRecording();
     }
 });

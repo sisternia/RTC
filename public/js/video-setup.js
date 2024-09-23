@@ -109,6 +109,8 @@ function setupStreams(stream) {
 
 // Bắt đầu chia sẻ màn hình
 document.getElementById('toggleDisplay').addEventListener('click', async () => {
+    const toggleDisplayButton = document.getElementById('toggleDisplay');
+
     if (!screenStream) {
         try {
             // Lấy danh sách các nguồn từ main process
@@ -147,6 +149,10 @@ document.getElementById('toggleDisplay').addEventListener('click', async () => {
                 localVideo.srcObject = localStream;
                 localVideo.classList.remove('screen-video');
 
+                // Đặt lại nút về màu ban đầu khi dừng chia sẻ màn hình
+                toggleDisplayButton.classList.remove('btn-danger');
+                toggleDisplayButton.classList.add('btn-outline-primary');
+
                 Object.values(peers).forEach(peer => {
                     const videoSender = peer._pc.getSenders().find(s => s.track.kind === 'video');
                     videoSender.replaceTrack(cameraStream.getVideoTracks()[0]);
@@ -155,6 +161,10 @@ document.getElementById('toggleDisplay').addEventListener('click', async () => {
 
             localVideo.srcObject = localStream;
             localVideo.classList.add('screen-video');
+
+            // Chuyển nút thành màu đỏ khi bắt đầu chia sẻ màn hình
+            toggleDisplayButton.classList.remove('btn-outline-primary');
+            toggleDisplayButton.classList.add('btn-danger');
 
             // Gửi lại stream mới tới các peer
             Object.values(peers).forEach(peer => {
@@ -173,6 +183,10 @@ document.getElementById('toggleDisplay').addEventListener('click', async () => {
         localStream.addTrack(cameraStream.getVideoTracks()[0]);
         localVideo.srcObject = localStream;
         localVideo.classList.remove('screen-video');
+
+        // Đặt lại nút về màu ban đầu khi dừng chia sẻ màn hình
+        toggleDisplayButton.classList.remove('btn-danger');
+        toggleDisplayButton.classList.add('btn-outline-primary');
 
         Object.values(peers).forEach(peer => {
             const videoSender = peer._pc.getSenders().find(s => s.track.kind === 'video');
@@ -193,9 +207,19 @@ toggleCameraButton.addEventListener('click', () => {
         videoTrack.enabled = cameraEnabled;
     }
 
+    // Cập nhật biểu tượng và màu của nút camera
     toggleCameraButton.innerHTML = cameraEnabled
         ? '<i class="bi bi-camera-video"></i>'
         : '<i class="bi bi-camera-video-off"></i>';
+
+    // Chuyển nút thành màu đỏ nếu camera bị tắt
+    if (cameraEnabled) {
+        toggleCameraButton.classList.remove('btn-danger');
+        toggleCameraButton.classList.add('btn-outline-primary');
+    } else {
+        toggleCameraButton.classList.remove('btn-outline-primary');
+        toggleCameraButton.classList.add('btn-danger');
+    }
 
     // Cập nhật video track nếu không chia sẻ màn hình
     if (!screenStream) {
@@ -223,12 +247,23 @@ toggleMicButton.addEventListener('click', () => {
         audioTrack.enabled = micEnabled;
     }
 
+    // Cập nhật biểu tượng và màu của nút mic
     toggleMicButton.innerHTML = micEnabled
         ? '<i class="bi bi-mic"></i>'
         : '<i class="bi bi-mic-mute"></i>';
 
+    // Chuyển nút thành màu đỏ nếu mic bị tắt
+    if (micEnabled) {
+        toggleMicButton.classList.remove('btn-danger');
+        toggleMicButton.classList.add('btn-outline-primary');
+    } else {
+        toggleMicButton.classList.remove('btn-outline-primary');
+        toggleMicButton.classList.add('btn-danger');
+    }
+
     socket.emit('toggle-mic', micEnabled);
 });
+
 
 // Thêm video từ người dùng khác
 function addRemoteVideo(userId, username, stream) {
