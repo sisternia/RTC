@@ -10,6 +10,8 @@ let micEnabled = true;
 let recordingStream;
 let mediaRecorder;
 let audioChunks = [];
+let pinnedVideoId = null; // Lưu trữ ID của video đang được ghim
+let currentUserId = null; // ID của chính bản thân user
 const peers = {};
 
 // Hàm tạo stream video giả (màn hình đen)
@@ -25,6 +27,18 @@ function createDummyVideoStream() {
 
     const stream = canvas.captureStream(15); // 15 fps
     return stream;
+}
+
+// Hàm khởi tạo kết nối và xác định ID của bản thân
+function initSocketConnection(username, roomId) {
+    socket.emit('ready', { username, roomId });
+
+    // Lắng nghe sự kiện từ server khi bản thân đã sẵn sàng
+    socket.on('user-ready', (data) => {
+        if (data.username === username) {
+            currentUserId = data.userId; // Lưu ID của bản thân
+        }
+    });
 }
 
 // Hàm khởi tạo stream media
@@ -98,14 +112,56 @@ async function handleNoMedia() {
     setupStreams(dummyVideoStream);
 }
 
-// Hàm thiết lập các stream và gửi sự kiện 'ready'
+// Hàm xử lý khi video của chính bản thân được hiển thị
 function setupStreams(stream) {
     cameraStream = stream;
     localStream = stream.clone();
     recordingStream = stream.clone();
+    
+    // Gắn stream của chính bản thân vào video chính
+    const localVideo = document.getElementById('localVideo');
     localVideo.srcObject = localStream;
+
+    // Gán nhãn là "You" cho video của chính bản thân
+    const localUserLabel = document.getElementById('localUserLabel');
+    localUserLabel.textContent = 'You';
+
+    // Phát sự kiện 'ready' tới server
     socket.emit('ready', { username, roomId });
 }
+
+// Hàm đổi chỗ video giữa bạn và user khác
+function swapVideos(userId) {
+    const mainVideoBox = document.querySelector('.main-video-box');
+    const mainVideoElement = mainVideoBox.querySelector('video');
+    const mainUserLabel = mainVideoBox.querySelector('.user-label');
+
+    const remoteVideoBox = document.getElementById(`video-container-${userId}`);
+    const remoteVideoElement = remoteVideoBox.querySelector('video');
+    const remoteUserLabel = remoteVideoBox.querySelector('.user-label');
+
+    // Hoán đổi stream video giữa hai video
+    const tempStream = mainVideoElement.srcObject;
+    mainVideoElement.srcObject = remoteVideoElement.srcObject;
+    remoteVideoElement.srcObject = tempStream;
+
+    // Hoán đổi label giữa hai video
+    const tempLabel = mainUserLabel.textContent;
+    mainUserLabel.textContent = remoteUserLabel.textContent;
+    remoteUserLabel.textContent = tempLabel;
+
+    // Cập nhật lại trạng thái ID của video đang được ghim
+    pinnedVideoId = userId;
+}
+
+// Thêm sự kiện click vào icon pin
+document.addEventListener('click', (event) => {
+    if (event.target.classList.contains('pin-icon')) {
+        const videoContainer = event.target.closest('.video-box');
+        const userId = videoContainer.id.split('-')[2]; // Lấy userId từ ID của video container
+        swapVideos(userId);
+    }
+});
 
 // Bắt đầu chia sẻ màn hình
 document.getElementById('toggleDisplay').addEventListener('click', async () => {
@@ -265,7 +321,7 @@ toggleMicButton.addEventListener('click', () => {
 });
 
 
-// Thêm video từ người dùng khác
+// Hàm thêm video từ người dùng khác
 function addRemoteVideo(userId, username, stream) {
     const videoContainer = document.createElement('div');
     videoContainer.className = 'secondary-video-box video-box';
@@ -273,17 +329,21 @@ function addRemoteVideo(userId, username, stream) {
 
     const userLabel = document.createElement('div');
     userLabel.className = 'user-label';
-    userLabel.textContent = username;
+
+    // Kiểm tra xem đây có phải là video của chính bản thân không
+    if (userId === currentUserId) {
+        userLabel.textContent = 'You';
+    } else {
+        userLabel.textContent = username;
+    }
 
     const remoteVideo = document.createElement('video');
     remoteVideo.id = `video-${userId}`;
     remoteVideo.autoplay = true;
 
-    // Kiểm tra nếu stream có video tracks
     if (stream.getVideoTracks().length > 0) {
         remoteVideo.srcObject = stream;
     } else {
-        // Sử dụng stream video giả nếu không có video track
         remoteVideo.srcObject = createDummyVideoStream();
     }
 
@@ -293,8 +353,5 @@ function addRemoteVideo(userId, username, stream) {
     videoContainer.appendChild(userLabel);
     videoContainer.appendChild(remoteVideo);
     videoContainer.appendChild(pinIcon);
-    remoteVideos.appendChild(videoContainer);
+    document.getElementById('remoteVideos').appendChild(videoContainer);
 }
-
-
-
