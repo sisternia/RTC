@@ -1,4 +1,5 @@
 // \web\main.js
+
 const { app, BrowserWindow, ipcMain, session } = require('electron');
 const path = require('path');
 const os = require('os');
@@ -13,10 +14,16 @@ let mainWindow2;
 // Bỏ qua các lỗi chứng chỉ tự ký
 app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
 
+// Hàm tạo cửa sổ với session và userDataPath riêng biệt
 function createWindow(clientNumber) {
     const userDataPath = clientNumber === 1 ? userDataPath1 : userDataPath2;
     
+    // Thiết lập đường dẫn userData riêng cho từng cửa sổ
     app.setPath('userData', userDataPath);
+    
+    // Tạo session riêng cho mỗi client
+    const partition = `persist:client_${clientNumber}`; // Tạo partition riêng biệt cho mỗi client
+    const customSession = session.fromPartition(partition, { cache: true });
 
     let mainWindow = new BrowserWindow({
         width: 1200,
@@ -25,6 +32,7 @@ function createWindow(clientNumber) {
             nodeIntegration: true,
             contextIsolation: false,
             enableRemoteModule: true,
+            session: customSession // Sử dụng session riêng
         },
     });
 
@@ -67,5 +75,3 @@ ipcMain.handle('get-sources', async (event) => {
     const inputSources = await desktopCapturer.getSources({ types: ['window', 'screen'] });
     return inputSources;
 });
-
-
