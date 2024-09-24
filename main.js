@@ -7,16 +7,18 @@ const { desktopCapturer } = require('electron');
 
 const userDataPath1 = path.join(os.homedir(), 'MyElectronAppData_Client1');
 const userDataPath2 = path.join(os.homedir(), 'MyElectronAppData_Client2');
+const userDataPath3 = path.join(os.homedir(), 'MyElectronAppData_Client3'); // Thêm đường dẫn cho Client 3
 
 let mainWindow1;
 let mainWindow2;
+let mainWindow3; // Thêm biến cho cửa sổ thứ 3
 
 // Bỏ qua các lỗi chứng chỉ tự ký
 app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
 
 // Hàm tạo cửa sổ với session và userDataPath riêng biệt
 function createWindow(clientNumber) {
-    const userDataPath = clientNumber === 1 ? userDataPath1 : userDataPath2;
+    const userDataPath = clientNumber === 1 ? userDataPath1 : (clientNumber === 2 ? userDataPath2 : userDataPath3); // Thêm cho Client 3
     
     // Thiết lập đường dẫn userData riêng cho từng cửa sổ
     app.setPath('userData', userDataPath);
@@ -49,9 +51,10 @@ function createWindow(clientNumber) {
 }
 
 app.on('ready', () => {
-    // Tạo 2 cửa sổ client riêng biệt
+    // Tạo 3 cửa sổ client riêng biệt
     mainWindow1 = createWindow(1);
     mainWindow2 = createWindow(2);
+    mainWindow3 = createWindow(3); // Tạo cửa sổ thứ 3
 });
 
 app.on('window-all-closed', function () {
@@ -67,6 +70,9 @@ app.on('activate', function () {
     if (mainWindow2 === null) {
         mainWindow2 = createWindow(2);
     }
+    if (mainWindow3 === null) {
+        mainWindow3 = createWindow(3); // Kích hoạt lại cửa sổ thứ 3 nếu đã đóng
+    }
 });
 
 // Lắng nghe yêu cầu từ renderer để chia sẻ màn hình
@@ -75,3 +81,4 @@ ipcMain.handle('get-sources', async (event) => {
     const inputSources = await desktopCapturer.getSources({ types: ['window', 'screen'] });
     return inputSources;
 });
+

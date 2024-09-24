@@ -27,8 +27,8 @@ mongoose.connect('mongodb://localhost:27017/webrtc', {
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
-    .then(() => console.log('Đã kết nối thành công với MongoDB'))
-    .catch((err) => console.log('Lỗi kết nối đến MongoDB:', err));
+    .then(() => console.log(`[${new Date().toLocaleString()}] Đã kết nối thành công với MongoDB`))
+    .catch((err) => console.log(`[${new Date().toLocaleString()}] Lỗi kết nối đến MongoDB:`, err));
 
 // Sử dụng route để đăng ký, đăng nhập, lấy thông tin người dùng
 app.use('/', authRoutes);
@@ -39,7 +39,7 @@ let users = {}; // Danh sách các người dùng kết nối với roomId
 let rooms = {}; // Danh sách các phòng và số lượng người dùng trong mỗi phòng
 
 io.on('connection', (socket) => {
-    console.log('Người dùng đã kết nối:', socket.id);
+    console.log(`[${new Date().toLocaleString()}] Người dùng đã kết nối:`, socket.id);
 
     // Khi một người dùng đã sẵn sàng
     socket.on('ready', async ({ username, roomId }) => {
@@ -53,7 +53,7 @@ io.on('connection', (socket) => {
         rooms[roomId].users += 1;
 
         socket.join(roomId); // Tham gia vào roomId tương ứng
-        console.log(`${username} đã tham gia phòng ${roomId}`);
+        console.log(`[${new Date().toLocaleString()}] ${username} đã tham gia phòng ${roomId}`);
 
         io.to(roomId).emit('user-ready', { userId: socket.id, username: socket.username });
         io.to(roomId).emit('message', { from: 'System', text: `${socket.username} đã kết nối.` });
@@ -68,7 +68,7 @@ io.on('connection', (socket) => {
     // Tạo phòng mới
     socket.on('create-room', (data) => {
         rooms[data.roomId] = { roomName: data.roomName, creator: data.username, users: 0 };
-        console.log(`Phòng ${data.roomName} đã được tạo bởi ${data.username}`);
+        console.log(`[${new Date().toLocaleString()}] Phòng ${data.roomName} đã được tạo bởi ${data.username}`);
         io.emit('room-list', getRooms()); // Gửi danh sách phòng đến tất cả người dùng
     });
 
@@ -109,7 +109,7 @@ io.on('connection', (socket) => {
             cameraEnabled: cameraEnabled,
             username: socket.username // Gửi username để hiển thị
         });
-        console.log(`${socket.username} đã ${cameraEnabled ? 'bật' : 'tắt'} camera`);
+        console.log(`[${new Date().toLocaleString()}] ${socket.username} đã ${cameraEnabled ? 'bật' : 'tắt'} camera`);
     });
 
     // Xử lý việc bật/tắt microphone
@@ -119,7 +119,7 @@ io.on('connection', (socket) => {
             micEnabled: micEnabled,
             username: socket.username // Gửi username để hiển thị
         });
-        console.log(`${socket.username} đã ${micEnabled ? 'bật' : 'tắt'} microphone`);
+        console.log(`[${new Date().toLocaleString()}] ${socket.username} đã ${micEnabled ? 'bật' : 'tắt'} microphone`);
     });
 
     // Xử lý người dùng rời khỏi phòng
@@ -132,7 +132,7 @@ io.on('connection', (socket) => {
             }
         }
         socket.leave(roomId);
-        console.log(`${socket.username} đã rời khỏi phòng ${roomId}`);
+        console.log(`[${new Date().toLocaleString()}] ${socket.username} đã rời khỏi phòng ${roomId}`);
         delete users[socket.id]; // Xóa người dùng khỏi danh sách
         io.to(roomId).emit('message', { from: 'System', text: `${socket.username} đã rời khỏi phòng.` });
         io.emit('room-list', getRooms()); // Cập nhật danh sách phòng
@@ -142,7 +142,7 @@ io.on('connection', (socket) => {
 
     // Xử lý sự kiện ngắt kết nối
     socket.on('disconnect', () => {
-        console.log('Người dùng đã ngắt kết nối:', socket.id);
+        console.log(`[${new Date().toLocaleString()}] Người dùng đã ngắt kết nối:`, socket.id);
         const roomId = users[socket.id]?.roomId;
         if (roomId && rooms[roomId]) {
             rooms[roomId].users -= 1;
@@ -170,7 +170,5 @@ function getRooms() {
 
 // Khởi động server tại cổng 3000
 server.listen(3000, () => {
-    console.log('Server đang chạy tại: https://localhost:3000/login.html');
+    console.log(`[${new Date().toLocaleString()}] Server đang chạy tại: https://localhost:3000/login.html`);
 });
-
-
