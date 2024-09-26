@@ -15,7 +15,6 @@ Cấu trúc
 |   |-- |-- socket-connection.js
 |   |-- |-- video-setup.js
 |   |-- login.html
-|   |-- screen.html
 |   |-- register.html
 |   |-- index.html
 |   |-- reset_pass.html
@@ -36,6 +35,8 @@ npm install nodemailer
 npm install socket.io-client --save
 npm install nodemon --save-dev
 npm install electron --save-dev
+
+Cài đặt OpenSSL
 openssl genrsa -out key.pem 2048
 openssl req -new -key key.pem -out csr.pem
 openssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem

@@ -65,6 +65,23 @@ socket.on('user-disconnected', userId => {
     }
 });
 
+
+// Lắng nghe sự kiện người dùng ngắt kết nối
+socket.on('user-disconnected', (disconnectedUserId) => {
+    console.log(`Người dùng ${disconnectedUserId} đã thoát`);
+
+    // Kiểm tra nếu người thoát là người đang ghim video
+    if (pinnedVideoId === disconnectedUserId) {
+        restoreLocalVideo(); // Đưa video của chính người dùng về lại khung chính
+    }
+
+    // Xóa video của người dùng đã ngắt kết nối khỏi giao diện
+    const videoContainer = document.getElementById(`video-container-${disconnectedUserId}`);
+    if (videoContainer) {
+        videoContainer.remove();
+    }
+});
+
 // Khi người dùng bật/tắt camera
 socket.on('toggle-camera', (data) => {
     const remoteVideo = document.getElementById(`video-${data.userId}`);
