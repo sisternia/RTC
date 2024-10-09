@@ -1,11 +1,11 @@
 // \webrtc\server.js
-
 const express = require('express');
 const https = require('https'); // Sử dụng https thay vì http
 const fs = require('fs'); // Để đọc các file chứng chỉ SSL
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth'); // Import route xác thực người dùng
+const Room = require('./models/Room'); // Import mô hình Room
 
 const app = express();
 
@@ -33,10 +33,11 @@ mongoose.connect('mongodb://localhost:27017/webrtc', {
 // Sử dụng route để đăng ký, đăng nhập, lấy thông tin người dùng
 app.use('/', authRoutes);
 app.get('/user-info', authRoutes);
+app.get('/search-users', authRoutes);
+app.get('/autocomplete-users', authRoutes);
 
 // Logic cho Socket
 let users = {}; // Danh sách các người dùng kết nối với roomId
-let rooms = {}; // Danh sách các phòng và số lượng người dùng trong mỗi phòng
 
 io.on('connection', (socket) => {
     console.log(`[${new Date().toLocaleString()}] Người dùng đã kết nối:`, socket.id);
@@ -47,10 +48,25 @@ io.on('connection', (socket) => {
         socket.roomId = roomId;
         users[socket.id] = { username, roomId };
 
-        if (!rooms[roomId]) {
-            rooms[roomId] = { roomName: roomId, creator: username, users: 0 };
+        try {
+            // Tìm phòng trong cơ sở dữ liệu
+            const room = await Room.findOne({ room_id: roomId });
+            if (room) {
+                room.users += 1;
+                await room.save();
+            } else {
+                // Nếu phòng không tồn tại (trường hợp hiếm), tạo phòng mới
+                const newRoom = new Room({
+                    room_id: roomId,
+                    room_name: roomId,
+                    username: username,
+                    users: 1
+                });
+                await newRoom.save();
+            }
+        } catch (error) {
+            console.error(`[${new Date().toLocaleString()}] Lỗi khi cập nhật phòng:`, error);
         }
-        rooms[roomId].users += 1;
 
         socket.join(roomId); // Tham gia vào roomId tương ứng
         console.log(`[${new Date().toLocaleString()}] ${username} đã tham gia phòng ${roomId}`);
@@ -58,7 +74,7 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('user-ready', { userId: socket.id, username: socket.username });
         io.to(roomId).emit('message', { from: 'System', text: `${socket.username} đã kết nối.` });
 
-        io.emit('room-list', getRooms()); // Gửi danh sách phòng và số lượng người dùng cho tất cả các client
+        io.emit('room-list', await getRooms()); // Gửi danh sách phòng và số lượng người dùng cho tất cả các client
 
         // Gửi danh sách người dùng trong cùng phòng
         const usersInRoom = Object.values(users).filter(user => user.roomId === roomId);
@@ -66,15 +82,25 @@ io.on('connection', (socket) => {
     });
 
     // Tạo phòng mới
-    socket.on('create-room', (data) => {
-        rooms[data.roomId] = { roomName: data.roomName, creator: data.username, users: 0 };
-        console.log(`[${new Date().toLocaleString()}] Phòng ${data.roomName} đã được tạo bởi ${data.username}`);
-        io.emit('room-list', getRooms()); // Gửi danh sách phòng đến tất cả người dùng
+    socket.on('create-room', async (data) => {
+        try {
+            const room = new Room({
+                room_id: data.roomId,
+                room_name: data.roomName,
+                username: data.username,
+                users: 0
+            });
+            await room.save();
+            console.log(`[${new Date().toLocaleString()}] Phòng ${data.roomName} đã được tạo bởi ${data.username}`);
+            io.emit('room-list', await getRooms()); // Gửi danh sách phòng đến tất cả người dùng
+        } catch (error) {
+            console.error(`[${new Date().toLocaleString()}] Lỗi khi tạo phòng:`, error);
+        }
     });
 
     // Lấy danh sách phòng
-    socket.on('get-rooms', () => {
-        socket.emit('room-list', getRooms()); // Gửi danh sách phòng khi người dùng kết nối
+    socket.on('get-rooms', async () => {
+        socket.emit('room-list', await getRooms()); // Gửi danh sách phòng khi người dùng kết nối
     });
 
     // Xử lý tín hiệu WebRTC
@@ -123,49 +149,73 @@ io.on('connection', (socket) => {
     });
 
     // Xử lý người dùng rời khỏi phòng
-    socket.on('leave-room', () => {
+    socket.on('leave-room', async () => {
         const roomId = users[socket.id]?.roomId;
-        if (roomId && rooms[roomId]) {
-            rooms[roomId].users -= 1;
-            if (rooms[roomId].users <= 0) {
-                delete rooms[roomId];
+        if (roomId) {
+            try {
+                const room = await Room.findOne({ room_id: roomId });
+                if (room) {
+                    room.users -= 1;
+                    if (room.users <= 0) {
+                        await Room.deleteOne({ room_id: roomId });
+                    } else {
+                        await room.save();
+                    }
+                }
+            } catch (error) {
+                console.error(`[${new Date().toLocaleString()}] Lỗi khi cập nhật phòng:`, error);
             }
         }
         socket.leave(roomId);
         console.log(`[${new Date().toLocaleString()}] ${socket.username} đã rời khỏi phòng ${roomId}`);
         delete users[socket.id]; // Xóa người dùng khỏi danh sách
         io.to(roomId).emit('message', { from: 'System', text: `${socket.username} đã rời khỏi phòng.` });
-        io.emit('room-list', getRooms()); // Cập nhật danh sách phòng
+        io.emit('room-list', await getRooms()); // Cập nhật danh sách phòng
         io.to(roomId).emit('user-list', Object.values(users).filter(user => user.roomId === roomId).map(user => user.username)); // Gửi lại danh sách người dùng cho client
         io.to(roomId).emit('user-disconnected', socket.id);
     });
 
     // Xử lý sự kiện ngắt kết nối
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
         console.log(`[${new Date().toLocaleString()}] Người dùng đã ngắt kết nối:`, socket.id);
         const roomId = users[socket.id]?.roomId;
-        if (roomId && rooms[roomId]) {
-            rooms[roomId].users -= 1;
-            if (rooms[roomId].users <= 0) {
-                delete rooms[roomId];
+        if (roomId) {
+            try {
+                const room = await Room.findOne({ room_id: roomId });
+                if (room) {
+                    room.users -= 1;
+                    if (room.users <= 0) {
+                        await Room.deleteOne({ room_id: roomId });
+                    } else {
+                        await room.save();
+                    }
+                }
+            } catch (error) {
+                console.error(`[${new Date().toLocaleString()}] Lỗi khi cập nhật phòng:`, error);
             }
         }
         delete users[socket.id]; // Xóa người dùng khỏi danh sách
         io.to(roomId).emit('message', { from: 'System', text: `${socket.username} đã ngắt kết nối.` });
-        io.emit('room-list', getRooms()); // Cập nhật danh sách phòng
+        io.emit('room-list', await getRooms()); // Cập nhật danh sách phòng
         io.to(roomId).emit('user-list', Object.values(users).filter(user => user.roomId === roomId).map(user => user.username)); // Gửi lại danh sách người dùng cho client
         io.to(roomId).emit('user-disconnected', socket.id);
     });
 });
 
 // Hàm lấy danh sách phòng
-function getRooms() {
-    return Object.keys(rooms).map(roomId => ({
-        roomId,
-        roomName: rooms[roomId].roomName,
-        username: rooms[roomId].creator,
-        users: rooms[roomId].users
-    }));
+async function getRooms() {
+    try {
+        const rooms = await Room.find({});
+        return rooms.map(room => ({
+            roomId: room.room_id,
+            roomName: room.room_name,
+            username: room.username,
+            users: room.users
+        }));
+    } catch (error) {
+        console.error(`[${new Date().toLocaleString()}] Lỗi khi lấy danh sách phòng:`, error);
+        return [];
+    }
 }
 
 // Khởi động server tại cổng 3000

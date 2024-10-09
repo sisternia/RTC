@@ -178,4 +178,43 @@ router.post('/reset-password', async (req, res) => {
     }
 });
 
+// Route xử lý tự động hoàn thành khi tìm kiếm người dùng
+router.get('/autocomplete-users', async (req, res) => {
+    const { query } = req.query;
+    if (!query) {
+        return res.json({ success: false, message: 'Thiếu chuỗi tìm kiếm' });
+    }
+
+    try {
+        // Tìm kiếm tối đa 5 người dùng có username bắt đầu với chuỗi tìm kiếm (không phân biệt hoa thường)
+        const users = await User.find(
+            { username: { $regex: '^' + query, $options: 'i' } },
+            'username -_id'
+        ).limit(5);
+
+        res.json({ success: true, users });
+    } catch (error) {
+        res.json({ success: false, message: 'Lỗi khi tìm kiếm người dùng' });
+    }
+});
+
+// Route xử lý tìm kiếm người dùng
+router.get('/search-users', async (req, res) => {
+    const { query } = req.query;
+    if (!query) {
+        return res.json({ success: false, message: 'Missing search query' });
+    }
+
+    try {
+        // Tìm kiếm người dùng có username chứa chuỗi tìm kiếm (không phân biệt hoa thường)
+        const users = await User.find({
+            username: { $regex: query, $options: 'i' }
+        }, 'username -_id'); // Chỉ lấy username và email, loại bỏ _id
+
+        res.json({ success: true, users });
+    } catch (error) {
+        res.json({ success: false, message: 'Error searching users' });
+    }
+});
+
 module.exports = router;
