@@ -1,5 +1,4 @@
 // \webrtc\public\js\room.js
-// (Các biến và sự kiện đã có giữ nguyên)
 const createRoomButton = document.getElementById('createRoomButton');
 const confirmRoomButton = document.getElementById('confirmRoomButton');
 const roomNameInput = document.getElementById('roomName');
@@ -13,9 +12,7 @@ const modalEmail = document.getElementById('modalEmail');
 // Các biến cho tính năng tìm kiếm
 const searchUserButton = document.getElementById('searchUserButton');
 const searchInput = document.getElementById('searchInput');
-const searchButton = document.getElementById('searchButton');
 const searchResults = document.getElementById('searchResults');
-const autocompleteList = document.getElementById('autocompleteList');
 const closeSearchModalButton = document.getElementById('closeSearchModalButton');
 
 // Lấy username từ localStorage
@@ -87,8 +84,8 @@ userInfoButton.addEventListener('click', async () => {
         const response = await fetch(`/user-info?username=${username}`);
         const data = await response.json();
         if (data.success) {
-            document.getElementById('modalUsername').value = data.user.username;
-            document.getElementById('modalEmail').value = data.user.email;
+            modalUsername.value = data.user.username;
+            modalEmail.value = data.user.email;
             const userInfoModal = new bootstrap.Modal(document.getElementById('userInfoModal'));
             userInfoModal.show(); // Hiển thị modal với thông tin người dùng
         } else {
@@ -103,7 +100,6 @@ userInfoButton.addEventListener('click', async () => {
 searchUserButton.addEventListener('click', () => {
     searchInput.value = ''; // Reset input
     searchResults.innerHTML = ''; // Xóa kết quả cũ
-    autocompleteList.innerHTML = ''; // Xóa danh sách gợi ý
     const searchUserModal = new bootstrap.Modal(document.getElementById('searchUserModal'));
     searchUserModal.show(); // Hiển thị modal tìm kiếm
 });
@@ -113,69 +109,35 @@ searchInput.addEventListener('input', async () => {
     const searchQuery = searchInput.value.trim();
     if (searchQuery) {
         try {
+            // Gọi API để lấy danh sách người dùng gợi ý
             const response = await fetch(`/autocomplete-users?query=${encodeURIComponent(searchQuery)}`);
-            const data = await response.json();
-            if (data.success) {
-                displayAutocompleteSuggestions(data.users);
-            } else {
-                autocompleteList.innerHTML = '';
-            }
-        } catch (error) {
-            console.error('Lỗi khi tìm kiếm: ', error.message);
-            autocompleteList.innerHTML = '';
-        }
-    } else {
-        autocompleteList.innerHTML = '';
-    }
-});
-
-// Hàm hiển thị danh sách gợi ý
-function displayAutocompleteSuggestions(users) {
-    autocompleteList.innerHTML = ''; // Xóa danh sách cũ
-    if (users.length > 0) {
-        users.forEach(user => {
-            const suggestionDiv = document.createElement('div');
-            suggestionDiv.classList.add('autocomplete-suggestion');
-            suggestionDiv.textContent = user.username;
-            suggestionDiv.addEventListener('click', () => {
-                searchInput.value = user.username;
-                autocompleteList.innerHTML = '';
-            });
-            autocompleteList.appendChild(suggestionDiv);
-        });
-    } else {
-        autocompleteList.innerHTML = '';
-    }
-}
-
-// Xử lý khi nhấn nút "Xác nhận" trong modal
-searchButton.addEventListener('click', async () => {
-    const searchQuery = searchInput.value.trim();
-    if (searchQuery) {
-        try {
-            const response = await fetch(`/search-users?query=${encodeURIComponent(searchQuery)}`);
             const data = await response.json();
             if (data.success) {
                 displaySearchResults(data.users);
             } else {
-                searchResults.innerHTML = `<p>${data.message}</p>`;
+                searchResults.innerHTML = '<p>Không tìm thấy người dùng nào.</p>';
             }
         } catch (error) {
+            console.error('Lỗi khi tìm kiếm: ', error.message);
             searchResults.innerHTML = `<p>Lỗi khi tìm kiếm: ${error.message}</p>`;
         }
     } else {
-        alert('Vui lòng nhập tên người dùng cần tìm');
+        searchResults.innerHTML = '';
     }
 });
 
-// Hàm hiển thị kết quả tìm kiếm
+// Hàm hiển thị kết quả tìm kiếm và gợi ý
 function displaySearchResults(users) {
     searchResults.innerHTML = ''; // Xóa kết quả cũ
     if (users.length > 0) {
         users.forEach(user => {
             const userDiv = document.createElement('div');
-            userDiv.classList.add('border', 'p-2', 'mb-2', 'rounded');
-            userDiv.innerHTML = `<strong>${user.username}</strong>`;
+            userDiv.classList.add('search-result');
+            userDiv.textContent = user.username;
+            userDiv.addEventListener('click', () => {
+                searchInput.value = user.username;
+                searchResults.innerHTML = '';
+            });
             searchResults.appendChild(userDiv);
         });
     } else {
@@ -186,6 +148,4 @@ function displaySearchResults(users) {
 // Đóng modal tìm kiếm khi nhấn nút "Đóng"
 closeSearchModalButton.addEventListener('click', () => {
     searchResults.innerHTML = ''; // Xóa kết quả khi đóng modal
-    autocompleteList.innerHTML = ''; // Xóa danh sách gợi ý
 });
-
