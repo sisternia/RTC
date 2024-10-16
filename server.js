@@ -5,6 +5,7 @@ const fs = require('fs'); // Để đọc các file chứng chỉ SSL
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth'); // Import route xác thực người dùng
+const authFriendRoutes = require('./routes/auth_friend');
 const Room = require('./models/Room'); // Import mô hình Room
 
 const app = express();
@@ -32,6 +33,7 @@ mongoose.connect('mongodb://localhost:27017/webrtc', {
 
 // Sử dụng route để đăng ký, đăng nhập, lấy thông tin người dùng
 app.use('/', authRoutes);
+app.use('/', authFriendRoutes);
 app.get('/user-info', authRoutes);
 app.get('/search-users', authRoutes);
 app.get('/autocomplete-users', authRoutes);

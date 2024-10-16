@@ -3,6 +3,8 @@ Cấu trúc
 |-- /models
 |   |-- User.js
 |   |-- Verify.js
+|   |-- Room.js
+|   |-- Friend.js
 |-- /node_modules
 |-- /public
 |   |-- /css
@@ -22,6 +24,7 @@ Cấu trúc
 |   |-- verify.html
 |-- /ssl
 |-- /routes
+|   |-- auth_friend.js
 |   |-- auth.js
 |-- main.js
 |-- package.json
