@@ -4,7 +4,7 @@ const https = require('https'); // Sử dụng https thay vì http
 const fs = require('fs'); // Để đọc các file chứng chỉ SSL
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
-const authRoutes = require('./routes/auth'); // Import route xác thực người dùng
+const authAccount = require('./routes/auth_account'); // Import route xác thực người dùng
 const authFriendRoutes = require('./routes/auth_friend');
 const Room = require('./models/Room'); // Import mô hình Room
 
@@ -32,11 +32,11 @@ mongoose.connect('mongodb://localhost:27017/webrtc', {
     .catch((err) => console.log(`[${new Date().toLocaleString()}] Lỗi kết nối đến MongoDB:`, err));
 
 // Sử dụng route để đăng ký, đăng nhập, lấy thông tin người dùng
-app.use('/', authRoutes);
+app.use('/', authAccount);
 app.use('/', authFriendRoutes);
-app.get('/user-info', authRoutes);
-app.get('/search-users', authRoutes);
-app.get('/autocomplete-users', authRoutes);
+app.get('/user-info', authAccount);
+app.get('/search-users', authAccount);
+app.get('/autocomplete-users', authAccount);
 
 // Logic cho Socket
 let users = {}; // Danh sách các người dùng kết nối với roomId

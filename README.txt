@@ -17,6 +17,9 @@ Cấu trúc
 |   |-- |-- socket-connection.js
 |   |-- |-- video-setup.js
 |   |-- login.html
+|   |-- infor_user.html
+|   |-- search_user.html
+|   |-- friend_user.html
 |   |-- register.html
 |   |-- index.html
 |   |-- reset_pass.html
