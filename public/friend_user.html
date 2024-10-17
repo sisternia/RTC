@@ -1,0 +1,47 @@
+<!-- \webrtc\public\friend_user.html -->
+<!-- Modal Quản lý Bạn bè -->
+<div class="modal fade" id="friendModal" tabindex="-1" aria-labelledby="friendModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quản lý Bạn bè</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs" id="friendTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="friends-tab" data-bs-toggle="tab" data-bs-target="#friends" type="button" role="tab" aria-controls="friends" aria-selected="true">Bạn bè</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="friend-requests-tab" data-bs-toggle="tab" data-bs-target="#friend-requests" type="button" role="tab" aria-controls="friend-requests" aria-selected="false">Lời mời kết bạn</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="sent-requests-tab" data-bs-toggle="tab" data-bs-target="#sent-requests" type="button" role="tab" aria-controls="sent-requests" aria-selected="false">Gửi lời mời</button>
+                    </li>
+                </ul>
+                <!-- Tab panes -->
+                <div class="tab-content mt-3">
+                    <div class="tab-pane fade show active" id="friends" role="tabpanel" aria-labelledby="friends-tab">
+                        <ul id="friendsList" class="list-group">
+                            <!-- Danh sách bạn bè sẽ được hiển thị ở đây -->
+                        </ul>
+                    </div>
+                    <div class="tab-pane fade" id="friend-requests" role="tabpanel" aria-labelledby="friend-requests-tab">
+                        <ul id="friendRequestsList" class="list-group">
+                            <!-- Lời mời kết bạn sẽ được hiển thị ở đây -->
+                        </ul>
+                    </div>
+                    <div class="tab-pane fade" id="sent-requests" role="tabpanel" aria-labelledby="sent-requests-tab">
+                        <ul id="sentRequestsList" class="list-group">
+                            <!-- Lời mời đã gửi sẽ được hiển thị ở đây -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="closeFriendModalButton" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>

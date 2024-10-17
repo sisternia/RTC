@@ -1,6 +1,24 @@
 // \webrtc\public\js\friend.js
 
-(function() {
+(async function() {
+
+    // Function to load modal HTML files
+    async function loadModal(url, containerId) {
+        try {
+            const response = await fetch(url);
+            const html = await response.text();
+            document.getElementById(containerId).innerHTML = html;
+        } catch (error) {
+            console.error('Error loading modal:', error);
+        }
+    }
+
+    // Load modals
+    await loadModal('search_user.html', 'search_user_container');
+    await loadModal('friend_user.html', 'friend_user_container');
+
+    // Now proceed with the rest of the code
+
     const friendButton = document.getElementById('friendButton');
 
     // Các biến cho tính năng tìm kiếm

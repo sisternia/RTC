@@ -1,4 +1,4 @@
-// models/Friend.js
+// webrtc/models/Friend.js
 const mongoose = require('mongoose');
 
 const FriendSchema = new mongoose.Schema({

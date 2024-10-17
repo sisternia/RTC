@@ -1,6 +1,22 @@
 // \webrtc\public\js\room.js
 
-(function() {
+(async function() {
+    // Function to load modal HTML files
+    async function loadModal(url, containerId) {
+        try {
+            const response = await fetch(url);
+            const html = await response.text();
+            document.getElementById(containerId).innerHTML = html;
+        } catch (error) {
+            console.error('Error loading modal:', error);
+        }
+    }
+
+    // Load modals
+    await loadModal('infor_user.html', 'infor_user_container');
+
+    // Now the modal is loaded, proceed with the rest of the code
+
     const createRoomButton = document.getElementById('createRoomButton');
     const confirmRoomButton = document.getElementById('confirmRoomButton');
     const roomNameInput = document.getElementById('roomName');
@@ -91,4 +107,5 @@
             alert('Lỗi khi lấy thông tin người dùng: ' + error.message);
         }
     });
+
 })();
