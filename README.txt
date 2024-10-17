@@ -13,6 +13,7 @@ Cấu trúc
 |   |-- |-- audio-recording.js
 |   |-- |-- chat.js
 |   |-- |-- main.js
+|   |-- |-- friend.js
 |   |-- |-- room.js
 |   |-- |-- socket-connection.js
 |   |-- |-- video-setup.js
@@ -28,7 +29,7 @@ Cấu trúc
 |-- /ssl
 |-- /routes
 |   |-- auth_friend.js
-|   |-- auth.js
+|   |-- auth_account.js
 |-- main.js
 |-- package.json
 |-- server.js
