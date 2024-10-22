@@ -26,6 +26,8 @@
     const userInfoButton = document.getElementById('userInfoButton');
     const modalUsername = document.getElementById('modalUsername');
     const modalEmail = document.getElementById('modalEmail');
+    const changePasswordButton = document.getElementById('changePasswordButton');
+    const confirmChangePasswordButton = document.getElementById('confirmChangePasswordButton');
 
     // Lấy username từ localStorage
     const username = localStorage.getItem('username');
@@ -106,6 +108,75 @@
         } catch (error) {
             alert('Lỗi khi lấy thông tin người dùng: ' + error.message);
         }
+    });
+
+    // Khi bấm vào nút Đổi mật khẩu
+    changePasswordButton.addEventListener('click', () => {
+        const userInfoModal = bootstrap.Modal.getInstance(document.getElementById('userInfoModal'));
+        userInfoModal.hide(); // Ẩn modal Thông tin User
+        const changePasswordModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+        changePasswordModal.show(); // Hiển thị modal Đổi mật khẩu
+    });
+
+    // Khi bấm nút Xác nhận đổi mật khẩu
+    confirmChangePasswordButton.addEventListener('click', async () => {
+        const oldPassword = document.getElementById('oldPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+        // Kiểm tra mật khẩu mới và xác nhận mật khẩu
+        if (newPassword !== confirmNewPassword) {
+            alert('Mật khẩu mới và xác nhận mật khẩu không khớp.');
+            return;
+        }
+
+        try {
+            const username = localStorage.getItem('username'); // Lấy username từ localStorage
+            const response = await fetch('/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, oldPassword, newPassword })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('Đổi mật khẩu thành công');
+                const changePasswordModal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
+                changePasswordModal.hide(); // Ẩn modal Đổi mật khẩu
+            } else {
+                alert(result.message || 'Đổi mật khẩu thất bại');
+            }
+        } catch (error) {
+            alert('Lỗi khi đổi mật khẩu: ' + error.message);
+        }
+    });
+
+    // Hàm xử lý toggle hiển thị mật khẩu
+    function togglePasswordVisibility(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === 'password') {
+            input.type = 'text'; // Hiển thị mật khẩu
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        } else {
+            input.type = 'password'; // Ẩn mật khẩu
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        }
+    }
+
+    // Gán sự kiện cho các nút bật/tắt hiển thị mật khẩu
+    document.getElementById('toggleOldPassword').addEventListener('click', () => {
+        togglePasswordVisibility('oldPassword', 'toggleOldPassword');
+    });
+
+    document.getElementById('toggleNewPassword').addEventListener('click', () => {
+        togglePasswordVisibility('newPassword', 'toggleNewPassword');
+    });
+
+    document.getElementById('toggleConfirmPassword').addEventListener('click', () => {
+        togglePasswordVisibility('confirmNewPassword', 'toggleConfirmPassword');
     });
 
 })();

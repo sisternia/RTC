@@ -178,6 +178,35 @@ router.post('/reset-password', async (req, res) => {
     }
 });
 
+// Route xử lý đổi mật khẩu
+router.post('/change-password', async (req, res) => {
+    const { username, oldPassword, newPassword } = req.body;
+
+    if (!username || !oldPassword || !newPassword) {
+        return res.status(400).json({ success: false, message: 'Thiếu thông tin cần thiết' });
+    }
+
+    try {
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Người dùng không tồn tại' });
+        }
+
+        const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+        if (!isPasswordValid) {
+            return res.status(400).json({ success: false, message: 'Mật khẩu cũ không đúng' });
+        }
+
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedNewPassword;
+        await user.save();
+
+        return res.status(200).json({ success: true, message: 'Đổi mật khẩu thành công' });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: 'Lỗi khi đổi mật khẩu' });
+    }
+});
+
 // Route xử lý tự động hoàn thành khi tìm kiếm người dùng
 router.get('/autocomplete-users', async (req, res) => {
     const { query } = req.query;

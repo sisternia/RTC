@@ -18,8 +18,48 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <!-- Nút Đổi mật khẩu -->
+                <button type="button" class="btn btn-primary" id="changePasswordButton">Đổi mật khẩu</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal Đổi mật khẩu -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePasswordModalLabel">Đổi mật khẩu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Mật khẩu cũ -->
+                <div class="mb-3 position-relative">
+                    <label for="oldPassword" class="form-label">Mật khẩu cũ</label>
+                    <input type="password" id="oldPassword" class="form-control">
+                    <i class="bi bi-eye-slash toggle-password" id="toggleOldPassword" style="position: absolute; top: 40px; right: 10px; cursor: pointer;"></i>
+                </div>
+                <!-- Mật khẩu mới -->
+                <div class="mb-3 position-relative">
+                    <label for="newPassword" class="form-label">Mật khẩu mới</label>
+                    <input type="password" id="newPassword" class="form-control">
+                    <i class="bi bi-eye-slash toggle-password" id="toggleNewPassword" style="position: absolute; top: 40px; right: 10px; cursor: pointer;"></i>
+                </div>
+                <!-- Xác nhận mật khẩu mới -->
+                <div class="mb-3 position-relative">
+                    <label for="confirmNewPassword" class="form-label">Xác nhận mật khẩu mới</label>
+                    <input type="password" id="confirmNewPassword" class="form-control">
+                    <i class="bi bi-eye-slash toggle-password" id="toggleConfirmPassword" style="position: absolute; top: 40px; right: 10px; cursor: pointer;"></i>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="confirmChangePasswordButton">Xác nhận</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
