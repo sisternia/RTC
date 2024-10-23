@@ -4,9 +4,10 @@ const https = require('https'); // Sử dụng https thay vì http
 const fs = require('fs'); // Để đọc các file chứng chỉ SSL
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
-const authAccount = require('./routes/auth_account'); // Import route xác thực người dùng
+const authAccount = require('./routes/auth_account');
 const authFriendRoutes = require('./routes/auth_friend');
-const Room = require('./models/Room'); // Import mô hình Room
+const authPrivateMessRoutes = require('./routes/auth_privatemess');
+const Room = require('./models/Room');
 
 const app = express();
 
@@ -34,21 +35,32 @@ mongoose.connect('mongodb://localhost:27017/webrtc', {
 // Sử dụng route để đăng ký, đăng nhập, lấy thông tin người dùng
 app.use('/', authAccount);
 app.use('/', authFriendRoutes);
+app.use('/', authPrivateMessRoutes);
 app.get('/user-info', authAccount);
 app.get('/search-users', authAccount);
 app.get('/autocomplete-users', authAccount);
 
 // Logic cho Socket
-let users = {}; // Danh sách các người dùng kết nối với roomId
+let users = {}; // Map giữa socket.id và thông tin người dùng
+let userSockets = {}; // Map giữa username và socket.id
 
 io.on('connection', (socket) => {
     console.log(`[${new Date().toLocaleString()}] Người dùng đã kết nối:`, socket.id);
+
+    // Nhận username từ client
+    socket.on('set-username', (username) => {
+        socket.username = username;
+        users[socket.id] = { username };
+        userSockets[username] = socket.id;
+        console.log(`[${new Date().toLocaleString()}] Username set: ${username}`);
+    });
 
     // Khi một người dùng đã sẵn sàng
     socket.on('ready', async ({ username, roomId }) => {
         socket.username = username;
         socket.roomId = roomId;
         users[socket.id] = { username, roomId };
+        userSockets[username] = socket.id;
 
         try {
             // Tìm phòng trong cơ sở dữ liệu
@@ -171,6 +183,7 @@ io.on('connection', (socket) => {
         socket.leave(roomId);
         console.log(`[${new Date().toLocaleString()}] ${socket.username} đã rời khỏi phòng ${roomId}`);
         delete users[socket.id]; // Xóa người dùng khỏi danh sách
+        delete userSockets[socket.username];
         io.to(roomId).emit('message', { from: 'System', text: `${socket.username} đã rời khỏi phòng.` });
         io.emit('room-list', await getRooms()); // Cập nhật danh sách phòng
         io.to(roomId).emit('user-list', Object.values(users).filter(user => user.roomId === roomId).map(user => user.username)); // Gửi lại danh sách người dùng cho client
@@ -196,12 +209,51 @@ io.on('connection', (socket) => {
                 console.error(`[${new Date().toLocaleString()}] Lỗi khi cập nhật phòng:`, error);
             }
         }
+        delete userSockets[socket.username];
         delete users[socket.id]; // Xóa người dùng khỏi danh sách
         io.to(roomId).emit('message', { from: 'System', text: `${socket.username} đã ngắt kết nối.` });
         io.emit('room-list', await getRooms()); // Cập nhật danh sách phòng
         io.to(roomId).emit('user-list', Object.values(users).filter(user => user.roomId === roomId).map(user => user.username)); // Gửi lại danh sách người dùng cho client
         io.to(roomId).emit('user-disconnected', socket.id);
     });
+
+    // Xử lý tham gia phòng chat riêng tư
+    socket.on('join-private-room', (data) => {
+        socket.join(data.roomId);
+        console.log(`[${new Date().toLocaleString()}] ${socket.username} đã tham gia phòng chat riêng tư ${data.roomId}`);
+    });
+
+    socket.on('private-message', async (data) => {
+        const toUsername = data.to;
+        const message = data.message;
+        const fromUsername = socket.username;
+        const dateSent = data.date_sent || new Date().toISOString();
+    
+        const toSocketId = userSockets[toUsername];
+        if (toSocketId && toSocketId !== socket.id) {
+            // Only send the message to the recipient, not the sender
+            io.to(toSocketId).emit('private-message', {
+                from: fromUsername,
+                to: toUsername,
+                message: message,
+                date_sent: dateSent
+            });
+        }
+    });
+
+    // Lắng nghe sự kiện messages-seen
+    socket.on('messages-seen', (data) => {
+        const senderUsername = data.to;
+        const recipientUsername = data.from;
+
+        const senderSocketId = userSockets[senderUsername];
+        if (senderSocketId && senderSocketId !== socket.id) {
+            io.to(senderSocketId).emit('messages-seen', {
+                from: recipientUsername
+            });
+        }
+    });
+    
 });
 
 // Hàm lấy danh sách phòng

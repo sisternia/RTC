@@ -17,17 +17,114 @@
             background-color: #f1f1f1;
         }
         .friend-modal-width{
-            max-width: 34%; /* Tùy chỉnh theo nhu cầu, ví dụ 80% */
+            max-width: 34%;
         }
         .search-modal-width{
-            max-width: 34%; /* Tùy chỉnh theo nhu cầu, ví dụ 80% */
+            max-width: 34%;
+        }
+        .chat-container {
+            width: 300px;
+            height: 400px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            bottom: 20px;
+            right: 80px;
+            z-index: 1000;
+            display: none;
+        }
+        .chat-header {
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border-bottom: 1px solid #ccc;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .chat-header .close-chat {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            cursor: pointer;
+            color: #fff;
+        }
+        .chat-box {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+        .message-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .message-container.self-container {
+            align-items: flex-end;
+        }
+        .time {
+            font-size: 0.8em;
+            margin-bottom: 2px;
+            color: gray;
+            display: none;
+            text-align: center;
+            width: 100%;
+        }
+        .message {
+            max-width: 70%;
+            padding: 10px;
+            border-radius: 15px;
+            word-wrap: break-word;
+        }
+        .message.self {
+            background-color: #0866ff;
+            color: #fff;
+        }
+        .message.other {
+            background-color: #f1f0f0;
+            color: #000;
+        }
+        .input-container {
+            display: flex;
+            padding: 10px;
+            flex-shrink: 0;
+            border-top: 1px solid #ccc;
+        }
+        .input-container textarea {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            outline: none;
+            resize: none;
+            overflow-y: auto; /* Hiển thị thanh cuộn khi vượt quá chiều cao tối đa */
+            max-height: calc(1.5em * 4); /* Giới hạn chiều cao đến 4 dòng */
+        }
+        .input-container button {
+            margin-left: 10px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        /* Đảm bảo xuống dòng và khoảng trắng được giữ nguyên */
+        .message .text {
+            white-space: pre-wrap;
         }
     </style>
 </head>
 <body>
-    <div class="container mt-5">
+    <div class="container mt-5  ">
         <div class="d-flex justify-content-between">
-            <h2 class="text-center">Room Management</h2>
+            <h2 class="text-center">AC Room</h2>
             <!-- Nút User Profile -->
             <div class="dropdown">
                 <button class="btn btn-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -68,22 +165,37 @@
             </div>
         </div>
 
-        <!-- Bảng hiển thị danh sách phòng -->
-        <table class="table table-bordered">
-            <thead>
-                <tr style="text-align: center;">
-                    <th>ID Phòng</th>
-                    <th>Tên Phòng</th>
-                    <th>Người tạo phòng</th>
-                    <th>Số người</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody id="roomTableBody">
-                <!-- Các phòng sẽ được thêm vào đây -->
-            </tbody>
-        </table>
+        <!-- Main content with room list and friend list -->
+        <div class="row">
+            <div class="col-md-9">
+                <!-- Bảng hiển thị danh sách phòng -->
+                <table class="table table-bordered">
+                    <thead>
+                        <tr style="text-align: center;">
+                            <th>ID Phòng</th>
+                            <th>Tên Phòng</th>
+                            <th>Người tạo phòng</th>
+                            <th>Số người</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="roomTableBody">
+                        <!-- Các phòng sẽ được thêm vào đây -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-3">
+                <!-- Danh sách bạn bè -->
+                <h3 style="text-align: center;">Bạn bè</h3>
+                <ul id="friendList" class="list-group">
+                    <!-- Friends will be listed here -->
+                </ul>
+            </div>
+        </div>
     </div>
+
+    <!-- Include the chat interface -->
+    <div id="chatUserContainer"></div>
 
     <!-- Placeholders for modals -->
     <div id="infor_user_container"></div>

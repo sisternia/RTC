@@ -1,44 +1,66 @@
 // \webrtc\public\js\room.js
 
 (async function() {
-    // Function to load modal HTML files
-    async function loadModal(url, containerId) {
+    // Hàm tải nội dung HTML vào một container
+    async function loadContent(url, containerId) {
         try {
             const response = await fetch(url);
             const html = await response.text();
             document.getElementById(containerId).innerHTML = html;
         } catch (error) {
-            console.error('Error loading modal:', error);
+            console.error('Lỗi khi tải nội dung:', error);
         }
     }
 
-    // Load modals
-    await loadModal('infor_user.html', 'infor_user_container');
+    // Hàm tải một tệp JavaScript một cách động
+    function loadScript(url) {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = url;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`Không thể tải script ${url}`));
+            document.body.appendChild(script);
+        });
+    }
 
-    // Now the modal is loaded, proceed with the rest of the code
-
-    const createRoomButton = document.getElementById('createRoomButton');
-    const confirmRoomButton = document.getElementById('confirmRoomButton');
-    const roomNameInput = document.getElementById('roomName');
-    const roomTableBody = document.getElementById('roomTableBody');
-    const usernameDisplay = document.getElementById('usernameDisplay');
-    const logoutButton = document.getElementById('logoutButton');
-    const userInfoButton = document.getElementById('userInfoButton');
-    const modalUsername = document.getElementById('modalUsername');
-    const modalEmail = document.getElementById('modalEmail');
-    const changePasswordButton = document.getElementById('changePasswordButton');
-    const confirmChangePasswordButton = document.getElementById('confirmChangePasswordButton');
+    // Tải các modal
+    await loadContent('infor_user.html', 'infor_user_container');
 
     // Lấy username từ localStorage
     const username = localStorage.getItem('username');
     if (!username) {
         window.location.href = 'login.html'; // Chuyển về trang đăng nhập nếu chưa có username
     } else {
-        usernameDisplay.innerText = username; // Hiển thị username lên giao diện
+        document.getElementById('usernameDisplay').innerText = username; // Hiển thị username lên giao diện
     }
 
     // Tạo kết nối với server qua Socket.io
     const socket = io('https://localhost:3000');
+
+    // Thông báo cho server về username
+    socket.emit('set-username', username);
+
+    // Làm cho socket và username có thể truy cập từ các script khác
+    window.socket = socket;
+    window.username = username;
+
+    // Tải giao diện chat
+    await loadContent('chat_user.html', 'chatUserContainer');
+
+    // Sau khi giao diện chat được tải, tải script chat-user.js
+    await loadScript('js/chat-user.js');
+
+    // Tiếp tục với phần code còn lại
+    const createRoomButton = document.getElementById('createRoomButton');
+    const confirmRoomButton = document.getElementById('confirmRoomButton');
+    const roomNameInput = document.getElementById('roomName');
+    const roomTableBody = document.getElementById('roomTableBody');
+    const logoutButton = document.getElementById('logoutButton');
+    const userInfoButton = document.getElementById('userInfoButton');
+    const modalUsername = document.getElementById('modalUsername');
+    const modalEmail = document.getElementById('modalEmail');
+    const changePasswordButton = document.getElementById('changePasswordButton');
+    const confirmChangePasswordButton = document.getElementById('confirmChangePasswordButton');
 
     // Sự kiện tạo phòng
     createRoomButton.addEventListener('click', () => {
@@ -77,7 +99,7 @@
         });
     });
 
-    // Hàm để join vào phòng
+    // Hàm để tham gia vào phòng
     window.joinRoom = function(roomId) {
         localStorage.setItem('roomId', roomId); // Lưu roomId vào localStorage
         window.location.href = `index.html?roomId=${roomId}`;
@@ -151,7 +173,7 @@
         }
     });
 
-    // Hàm xử lý toggle hiển thị mật khẩu
+    // Hàm xử lý bật/tắt hiển thị mật khẩu
     function togglePasswordVisibility(inputId, iconId) {
         const input = document.getElementById(inputId);
         const icon = document.getElementById(iconId);
@@ -180,3 +202,4 @@
     });
 
 })();
+

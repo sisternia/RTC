@@ -5,6 +5,7 @@ Cấu trúc
 |   |-- Verify.js
 |   |-- Room.js
 |   |-- Friend.js
+|   |-- PrivateMess.js
 |-- /node_modules
 |-- /public
 |   |-- /css
@@ -17,7 +18,9 @@ Cấu trúc
 |   |-- |-- room.js
 |   |-- |-- socket-connection.js
 |   |-- |-- video-setup.js
+|   |-- |-- chat-user.js
 |   |-- login.html
+|   |-- chat_user.html
 |   |-- infor_user.html
 |   |-- search_user.html
 |   |-- friend_user.html
@@ -30,6 +33,7 @@ Cấu trúc
 |-- /routes
 |   |-- auth_friend.js
 |   |-- auth_account.js
+|   |-- auth_privatemess.js
 |-- main.js
 |-- package.json
 |-- server.js
