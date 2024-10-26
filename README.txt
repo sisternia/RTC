@@ -12,13 +12,13 @@ Cấu trúc
 |   |-- |-- style.css
 |   |-- /js
 |   |-- |-- audio-recording.js
-|   |-- |-- chat.js
 |   |-- |-- main.js
 |   |-- |-- friend.js
 |   |-- |-- room.js
 |   |-- |-- socket-connection.js
 |   |-- |-- video-setup.js
 |   |-- |-- chat-user.js
+|   |-- |-- chat-room.js
 |   |-- login.html
 |   |-- chat_user.html
 |   |-- infor_user.html
