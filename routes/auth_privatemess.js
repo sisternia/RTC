@@ -4,7 +4,6 @@ const express = require('express');
 const router = express.Router();
 const PrivateMessage = require('../models/PrivateMess');
 
-// POST /private-messages
 // Lưu một tin nhắn riêng tư mới
 router.post('/private-messages', async (req, res) => {
     const { content, user_sent, user_receive, date_sent } = req.body;
@@ -25,7 +24,6 @@ router.post('/private-messages', async (req, res) => {
     }
 });
 
-// PUT /private-messages/mark-as-seen
 // Đánh dấu tin nhắn là đã xem
 router.put('/private-messages/mark-as-seen', async (req, res) => {
     const { user_sent, user_receive } = req.body;
@@ -50,7 +48,6 @@ router.put('/private-messages/mark-as-seen', async (req, res) => {
     }
 });
 
-// GET /private-messages
 // Lấy tin nhắn giữa hai người dùng
 router.get('/private-messages', async (req, res) => {
     const { user1, user2 } = req.query;
