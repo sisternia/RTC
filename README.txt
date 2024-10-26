@@ -30,6 +30,7 @@ Cấu trúc
 |   |-- room.html
 |   |-- verify.html
 |-- /ssl
+|-- /uploads
 |-- /routes
 |   |-- auth_friend.js
 |   |-- auth_account.js

@@ -8,6 +8,7 @@ const authAccount = require('./routes/auth_account');
 const authFriendRoutes = require('./routes/auth_friend');
 const authPrivateMessRoutes = require('./routes/auth_privatemess');
 const Room = require('./models/Room');
+const path = require('path');
 
 const app = express();
 
@@ -21,6 +22,12 @@ const options = {
 const server = https.createServer(options, app);
 const io = socketIo(server);
 
+// Middleware để phục vụ file tĩnh từ thư mục uploads và đặt header tải file
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+    setHeaders: (res, filePath) => {
+        res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filePath)}"`);
+    }
+}));
 app.use(express.static('public')); // Sử dụng thư mục 'public' để phục vụ các file tĩnh
 app.use(express.json()); // Middleware để phân tích cú pháp JSON từ body của các request
 

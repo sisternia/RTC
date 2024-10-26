@@ -1,3 +1,5 @@
+// \webrtc\public\js\chat-user.js
+
 (async function() {
     // Truy cập username và socket từ đối tượng window toàn cục
     const username = window.username;
@@ -118,53 +120,47 @@
 
     // Hàm gửi tin nhắn
     async function sendMessage() {
-        if (selectedFile) { 
-            // Xử lý khi gửi file
-            const fileType = selectedFile.type.split('/').pop();
-            const fileSize = (selectedFile.size / 1024).toFixed(2) + ' KB';
-            const dateSent = new Date();
-
-            // Hiển thị file ngay lập tức cho người gửi
-            displayMessage(username, selectedFile.name, dateSent, null, '0', 'file', fileSize);
-
-            // Gửi file qua socket
-            socket.emit('private-message', {
-                to: currentChatFriend,
-                message: selectedFile.name,
-                type: 'file',
-                size: fileSize,
-                date_sent: dateSent.toISOString()
-            });
-
-            // Lưu tin nhắn vào cơ sở dữ liệu
+        if (selectedFile) {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('user_sent', username);
+            formData.append('user_receive', currentChatFriend);
+            formData.append('type', 'file');
+            formData.append('size', (selectedFile.size / 1024).toFixed(2) + ' KB');
+            formData.append('date_sent', new Date().toISOString());
+    
+            // Send file via API
             try {
                 const response = await fetch('/private-messages', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        content: selectedFile.name,
-                        user_sent: username,
-                        user_receive: currentChatFriend,
-                        type: 'file',
-                        size: fileSize,
-                        date_sent: dateSent.toISOString()
-                    })
+                    body: formData
                 });
                 const data = await response.json();
                 if (!data.success) {
                     console.error('Lỗi khi lưu tin nhắn:', data.message);
+                } else {
+                    const filePath = `/uploads/${selectedFile.name}`;
+                    displayMessage(username, filePath, new Date(), null, '0', 'file', selectedFile.size);
+                    
+                    // Emit private message with the file path to the recipient
+                    socket.emit('private-message', {
+                        to: currentChatFriend,
+                        message: filePath,
+                        type: 'file',
+                        size: (selectedFile.size / 1024).toFixed(2) + ' KB',
+                        date_sent: new Date().toISOString()
+                    });
                 }
             } catch (error) {
                 console.error('Lỗi khi lưu tin nhắn:', error);
             }
-
-            // Xóa nội dung trong chatInput và thiết lập lại selectedFile
+    
+            // Reset selectedFile
             selectedFile = null;
             chatInput.value = '';
-            chatInput.style.height = 'auto';
             return;
         }
-
+        
         // Xử lý tin nhắn văn bản
         const message = chatInput.value.trim();
         if (message === '') return;
@@ -246,19 +242,19 @@
     function displayMessage(sender, message, dateSent, messageId = null, status = '0', type = 'text', size = null) {
         const messageContainer = document.createElement('div');
         messageContainer.className = 'message-container';
-
+    
         const date = new Date(dateSent);
         const hours = date.getHours().toString().padStart(2, '0');
         const minutes = date.getMinutes().toString().padStart(2, '0');
         const timeString = `${hours}:${minutes}`;
-
+    
         const timeElement = document.createElement('div');
         timeElement.className = 'time';
         timeElement.textContent = timeString;
         timeElement.style.display = 'none';
-
+    
         const messageElement = document.createElement('div');
-
+    
         if (type === 'file') {
             messageElement.classList.add('file-message-card');
             const fileContainer = document.createElement('div');
@@ -266,21 +262,21 @@
             const fileIcon = document.createElement('div');
             fileIcon.className = 'file-icon';
             fileIcon.textContent = message.split('.').pop().toUpperCase();
-
+    
             const fileDetails = document.createElement('div');
             const fileName = document.createElement('div');
             fileName.className = 'file-name';
-            fileName.textContent = truncateFileName(message, 10);
-
+            fileName.textContent = truncateFileName(message.split('/').pop(), 10);
+    
             const fileSize = document.createElement('div');
             fileSize.className = 'file-size';
             fileSize.textContent = size;
-
+    
             fileDetails.appendChild(fileName);
             fileDetails.appendChild(fileSize);
             fileContainer.appendChild(fileIcon);
             fileContainer.appendChild(fileDetails);
-
+    
             const downloadIcon = document.createElement('i');
             downloadIcon.className = 'bi bi-arrow-down-square';
             downloadIcon.style.cursor = 'pointer';
@@ -288,7 +284,7 @@
             downloadIcon.addEventListener('click', () => {
                 downloadFile(message);
             });
-
+    
             messageElement.appendChild(fileContainer);
             messageElement.appendChild(downloadIcon);
         } else {
@@ -298,7 +294,8 @@
             textElement.textContent = message;
             messageElement.appendChild(textElement);
         }
-
+    
+        // Assign message styling
         if (sender === username) {
             messageElement.classList.add(type === 'file' ? 'file-message' : 'text-message', 'self');
             messageContainer.classList.add('self-container');
@@ -308,33 +305,45 @@
             messageElement.classList.add(type === 'file' ? 'file-message' : 'text-message', 'other');
             messageContainer.classList.add('other-container');
         }
-
+    
         messageElement.addEventListener('click', () => {
-            if (timeElement.style.display === 'none') {
-                timeElement.textContent = sender === username
-                    ? `${timeString} - ${(messageElement.dataset.status === '1' ? 'Đã xem' : 'Chưa xem')}`
-                    : timeString;
-                timeElement.style.display = 'block';
-            } else {
-                timeElement.style.display = 'none';
-            }
+            timeElement.style.display = timeElement.style.display === 'none' ? 'block' : 'none';
+            timeElement.textContent = sender === username
+                ? `${timeString} - ${(messageElement.dataset.status === '1' ? 'Đã xem' : 'Chưa xem')}`
+                : timeString;
             messageContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
-
+    
         messageContainer.appendChild(timeElement);
         messageContainer.appendChild(messageElement);
         chatBox.insertBefore(messageContainer, chatBox.firstChild);
-    }
+    }    
 
     // Hàm tải file
     function downloadFile(fileName) {
-        const fileUrl = `/path/to/files/${fileName}`;
-        const link = document.createElement('a');
-        link.href = fileUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const fileUrl = `/uploads/${fileName}`;
+    
+        // Fetch tệp từ server và tạo blob để đảm bảo tải xuống cho tất cả loại file
+        fetch(fileUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Không thể tải file');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const downloadUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(downloadUrl); // Giải phóng URL blob sau khi tải
+            })
+            .catch(error => {
+                console.error('Lỗi khi tải file:', error);
+            });
     }
 
     // Hàm đánh dấu tin nhắn đã xem khi người dùng tập trung vào trường nhập
