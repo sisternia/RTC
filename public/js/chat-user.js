@@ -1,5 +1,3 @@
-// \webrtc\public\js\chat-user.js
-
 (async function() {
     // Truy cập username và socket từ đối tượng window toàn cục
     const username = window.username;
@@ -11,43 +9,68 @@
         return;
     }
 
-    // Chức năng chat
+    // Biến lưu trữ bạn hiện đang chat và trạng thái mở cửa sổ chat
     let currentChatFriend = null;
+    let isChatOpened = false; // Đánh dấu xem chat đã được mở chưa
 
+    // Lấy các phần tử trong giao diện
     const chatContainer = document.getElementById('chatContainer');
     const chatFriendName = document.getElementById('chatFriendName');
-    const chatBox = document.getElementById('chatBox'); // Bây giờ là textarea
+    const chatBox = document.getElementById('chatBox'); 
     const chatInput = document.getElementById('chatInput');
     const sendMessageButton = document.getElementById('sendMessageButton');
     const closeChat = document.getElementById('closeChat');
+    const fileIcon = document.querySelector('.bi-folder-symlink.icon');
+    let selectedFile = null;
 
-    // Hàm mở chat với một người bạn
-    window.openChat = async function(friendUsername) {
+    // Sự kiện khi người dùng chọn file để gửi
+    fileIcon.addEventListener('click', () => {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.onchange = (event) => {
+            selectedFile = event.target.files[0];
+            chatInput.value = selectedFile.name; // Hiển thị tên file trong chatInput
+        };
+        fileInput.click();
+    });
+
+    // Hàm mở cuộc trò chuyện với một người bạn và tải lịch sử tin nhắn
+    window.openChat = async function(friendUsername, loadHistory = true) {
         currentChatFriend = friendUsername;
-        chatFriendName.innerText = `Chat với ${friendUsername}`; // Tiêu đề cố định
-        chatBox.innerHTML = '';
-        chatContainer.style.display = 'flex';
+        isChatOpened = true; // Đánh dấu là chat đã mở
+        chatFriendName.innerText = `Chat với ${friendUsername}`;
+        chatBox.innerHTML = ''; // Xóa nội dung chat hiện tại
+        chatContainer.style.display = 'flex'; // Hiển thị giao diện chat
 
-        // Tham gia một phòng riêng với bạn
+        // Tạo room ID và tham gia vào phòng chat riêng tư
         const roomId = [username, friendUsername].sort().join('_');
         socket.emit('join-private-room', { roomId });
 
-        // Tải lịch sử chat
-        try {
-            const response = await fetch(`/private-messages?user1=${username}&user2=${friendUsername}`);
-            const data = await response.json();
-            if (data.success) {
-                // Hiển thị tin nhắn
-                data.messages.forEach(message => {
-                    const dateSent = new Date(message.date_sent);
-                    displayMessage(message.user_sent, message.content, dateSent, message._id, message.status.toString());
-                });
-
-            } else {
-                console.error('Lỗi khi tải lịch sử chat');
+        // Nếu cần, tải lịch sử tin nhắn từ server
+        if (loadHistory) {
+            try {
+                const response = await fetch(`/private-messages?user1=${username}&user2=${friendUsername}`);
+                const data = await response.json();
+                if (data.success) {
+                    // Hiển thị từng tin nhắn từ lịch sử
+                    data.messages.forEach(message => {
+                        const dateSent = new Date(message.date_sent);
+                        displayMessage(
+                            message.user_sent,
+                            message.content,
+                            dateSent,
+                            message._id,
+                            message.status.toString(),
+                            message.type || 'text',
+                            message.size || null
+                        );
+                    });
+                } else {
+                    console.error('Lỗi khi tải lịch sử chat');
+                }
+            } catch (error) {
+                console.error('Lỗi khi lấy lịch sử chat:', error);
             }
-        } catch (error) {
-            console.error('Lỗi khi lấy lịch sử chat:', error);
         }
     };
 
@@ -57,16 +80,21 @@
             const response = await fetch(`/friends?username=${username}`);
             const data = await response.json();
             if (data.success) {
-                const friendList = document.getElementById('friendList'); // Lấy phần tử friendList
+                const friendList = document.getElementById('friendList'); 
                 friendList.innerHTML = ''; // Xóa danh sách hiện tại
+
+                // Thêm từng bạn bè vào danh sách
                 data.friends.forEach(friendUsername => {
                     const li = document.createElement('li');
                     li.className = 'list-group-item d-flex justify-content-between align-items-center';
                     li.innerText = friendUsername;
                     li.style.cursor = 'pointer';
-                    // Thêm sự kiện click để mở chat
+
+                    // Khi click vào tên bạn bè sẽ mở cuộc trò chuyện
                     li.addEventListener('click', () => {
-                        openChat(friendUsername);
+                        if (currentChatFriend !== friendUsername) {
+                            openChat(friendUsername, true);
+                        }
                     });
                     friendList.appendChild(li);
                 });
@@ -78,26 +106,75 @@
         }
     }
 
-    // Gọi loadFriendList khi script được tải
+    // Tải danh sách bạn bè khi script được khởi chạy
     loadFriendList();
 
-    // Đóng chat
+    // Đóng cuộc trò chuyện khi người dùng nhấn nút đóng
     closeChat.addEventListener('click', () => {
         chatContainer.style.display = 'none';
         currentChatFriend = null;
+        isChatOpened = false; // Đặt lại trạng thái mở cửa sổ chat
     });
 
-    // Gửi tin nhắn
+    // Hàm gửi tin nhắn
     async function sendMessage() {
+        if (selectedFile) { 
+            // Xử lý khi gửi file
+            const fileType = selectedFile.type.split('/').pop();
+            const fileSize = (selectedFile.size / 1024).toFixed(2) + ' KB';
+            const dateSent = new Date();
+
+            // Hiển thị file ngay lập tức cho người gửi
+            displayMessage(username, selectedFile.name, dateSent, null, '0', 'file', fileSize);
+
+            // Gửi file qua socket
+            socket.emit('private-message', {
+                to: currentChatFriend,
+                message: selectedFile.name,
+                type: 'file',
+                size: fileSize,
+                date_sent: dateSent.toISOString()
+            });
+
+            // Lưu tin nhắn vào cơ sở dữ liệu
+            try {
+                const response = await fetch('/private-messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: selectedFile.name,
+                        user_sent: username,
+                        user_receive: currentChatFriend,
+                        type: 'file',
+                        size: fileSize,
+                        date_sent: dateSent.toISOString()
+                    })
+                });
+                const data = await response.json();
+                if (!data.success) {
+                    console.error('Lỗi khi lưu tin nhắn:', data.message);
+                }
+            } catch (error) {
+                console.error('Lỗi khi lưu tin nhắn:', error);
+            }
+
+            // Xóa nội dung trong chatInput và thiết lập lại selectedFile
+            selectedFile = null;
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+            return;
+        }
+
+        // Xử lý tin nhắn văn bản
         const message = chatInput.value.trim();
         if (message === '') return;
 
         const dateSent = new Date();
 
-        // Hiển thị tin nhắn trong khung chat của mình
-        displayMessage(username, message, dateSent, null, '0');
+        // Hiển thị tin nhắn văn bản ngay lập tức cho người gửi
+        displayMessage(username, message, dateSent, null, '0', 'text');
 
-        // Gửi tin nhắn đến server
+        // Gửi tin nhắn văn bản qua socket
         socket.emit('private-message', {
             to: currentChatFriend,
             message: message,
@@ -113,6 +190,7 @@
                     content: message,
                     user_sent: username,
                     user_receive: currentChatFriend,
+                    type: 'text',
                     date_sent: dateSent.toISOString()
                 })
             });
@@ -126,14 +204,16 @@
 
         // Xóa nội dung trong trường nhập
         chatInput.value = '';
-        chatInput.style.height = 'auto'; // Đặt lại chiều cao
+        chatInput.style.height = 'auto';
     }
 
+    // Sự kiện click để gửi tin nhắn
     sendMessageButton.addEventListener('click', sendMessage);
 
+    // Sự kiện nhấn phím Enter để gửi tin nhắn, Shift + Enter để xuống dòng
     chatInput.addEventListener('keypress', function(event) {
         if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault(); // Ngăn xuống dòng
+            event.preventDefault();
             sendMessage();
         }
     });
@@ -150,76 +230,117 @@
         }
     });
 
-    // Hiển thị tin nhắn trong khung chat
-    function displayMessage(sender, message, dateSent, messageId = null, status = '0') {
+    // Hàm rút gọn tên file nếu quá dài
+    function truncateFileName(fileName, maxLength = 10) {
+        const extensionIndex = fileName.lastIndexOf('.');
+        if (extensionIndex === -1 || fileName.length <= maxLength) return fileName;
+
+        const namePart = fileName.slice(0, extensionIndex);
+        const extensionPart = fileName.slice(extensionIndex);
+        return namePart.length > maxLength
+            ? `${namePart.slice(0, maxLength - 5)}...${extensionPart}`
+            : fileName;
+    }
+
+    // Hàm hiển thị tin nhắn trên giao diện
+    function displayMessage(sender, message, dateSent, messageId = null, status = '0', type = 'text', size = null) {
         const messageContainer = document.createElement('div');
         messageContainer.className = 'message-container';
 
-        // Định dạng dateSent thành giờ-phút
         const date = new Date(dateSent);
         const hours = date.getHours().toString().padStart(2, '0');
         const minutes = date.getMinutes().toString().padStart(2, '0');
         const timeString = `${hours}:${minutes}`;
 
-        // Phần tử thời gian, ban đầu ẩn
         const timeElement = document.createElement('div');
         timeElement.className = 'time';
         timeElement.textContent = timeString;
         timeElement.style.display = 'none';
 
-        // Phần tử tin nhắn
         const messageElement = document.createElement('div');
-        messageElement.className = 'message';
 
-        // Nội dung tin nhắn
-        const textElement = document.createElement('div');
-        textElement.className = 'text';
-        // Sử dụng textContent để tránh XSS và giữ xuống dòng
-        textElement.textContent = message;
+        if (type === 'file') {
+            messageElement.classList.add('file-message-card');
+            const fileContainer = document.createElement('div');
+            fileContainer.className = 'file-message-card';
+            const fileIcon = document.createElement('div');
+            fileIcon.className = 'file-icon';
+            fileIcon.textContent = message.split('.').pop().toUpperCase();
 
-        messageElement.appendChild(textElement);
+            const fileDetails = document.createElement('div');
+            const fileName = document.createElement('div');
+            fileName.className = 'file-name';
+            fileName.textContent = truncateFileName(message, 10);
 
-        // Xác định tin nhắn từ mình hay người khác
+            const fileSize = document.createElement('div');
+            fileSize.className = 'file-size';
+            fileSize.textContent = size;
+
+            fileDetails.appendChild(fileName);
+            fileDetails.appendChild(fileSize);
+            fileContainer.appendChild(fileIcon);
+            fileContainer.appendChild(fileDetails);
+
+            const downloadIcon = document.createElement('i');
+            downloadIcon.className = 'bi bi-arrow-down-square';
+            downloadIcon.style.cursor = 'pointer';
+            downloadIcon.title = 'Tải xuống';
+            downloadIcon.addEventListener('click', () => {
+                downloadFile(message);
+            });
+
+            messageElement.appendChild(fileContainer);
+            messageElement.appendChild(downloadIcon);
+        } else {
+            messageElement.className = 'text-message';
+            const textElement = document.createElement('div');
+            textElement.className = 'text';
+            textElement.textContent = message;
+            messageElement.appendChild(textElement);
+        }
+
         if (sender === username) {
-            messageElement.classList.add('self');
+            messageElement.classList.add(type === 'file' ? 'file-message' : 'text-message', 'self');
             messageContainer.classList.add('self-container');
-            // Lưu messageId và status trong dataset
             messageElement.dataset.messageId = messageId;
             messageElement.dataset.status = status;
         } else {
-            messageElement.classList.add('other');
+            messageElement.classList.add(type === 'file' ? 'file-message' : 'text-message', 'other');
             messageContainer.classList.add('other-container');
         }
 
-        // Thêm sự kiện click để hiển thị thời gian và cuộn vào khung nhìn
         messageElement.addEventListener('click', () => {
             if (timeElement.style.display === 'none') {
-                if (sender === username) {
-                    // Hiển thị "Đã xem" hoặc "Chưa xem"
-                    const statusText = messageElement.dataset.status === '1' ? 'Đã xem' : 'Chưa xem';
-                    timeElement.textContent = `${timeString} - ${statusText}`;
-                } else {
-                    timeElement.textContent = timeString;
-                }
+                timeElement.textContent = sender === username
+                    ? `${timeString} - ${(messageElement.dataset.status === '1' ? 'Đã xem' : 'Chưa xem')}`
+                    : timeString;
                 timeElement.style.display = 'block';
             } else {
                 timeElement.style.display = 'none';
             }
-            // Cuộn tin nhắn vào khung nhìn
             messageContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
 
-        // Gắn các phần tử vào message container
         messageContainer.appendChild(timeElement);
         messageContainer.appendChild(messageElement);
-
-        // Thêm message container vào đầu chat box để hiển thị từ dưới lên
         chatBox.insertBefore(messageContainer, chatBox.firstChild);
     }
 
-    // Hàm đánh dấu tin nhắn đã xem
+    // Hàm tải file
+    function downloadFile(fileName) {
+        const fileUrl = `/path/to/files/${fileName}`;
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Hàm đánh dấu tin nhắn đã xem khi người dùng tập trung vào trường nhập
     async function markMessagesAsSeen() {
-        if (!currentChatFriend) return; // Không làm gì nếu không có bạn chat hiện tại
+        if (!currentChatFriend) return;
+
         try {
             const response = await fetch('/private-messages/mark-as-seen', {
                 method: 'PUT',
@@ -233,51 +354,36 @@
             if (!data.success) {
                 console.error('Lỗi khi đánh dấu tin nhắn đã xem:', data.message);
             } else {
-                // Sau khi đánh dấu tin nhắn là đã xem, gửi sự kiện qua Socket.io
-                socket.emit('messages-seen', {
-                    from: username,
-                    to: currentChatFriend
-                });
+                socket.emit('messages-seen', { from: username, to: currentChatFriend });
             }
         } catch (error) {
             console.error('Lỗi khi đánh dấu tin nhắn đã xem:', error);
         }
     }
 
-    // Thêm sự kiện focus vào trường nhập để đánh dấu tin nhắn đã xem khi người dùng tập trung vào nó
     chatInput.addEventListener('focus', markMessagesAsSeen);
 
-    // Nhận tin nhắn riêng tư
+    // Lắng nghe tin nhắn riêng tư từ socket và hiển thị lên giao diện
     socket.on('private-message', (data) => {
-        if (data.from === username) {
-            return; // Không xử lý tin nhắn do chính mình gửi
-        }
+        if (data.from === username) return;
 
-        // Kiểm tra xem cửa sổ chat với người gửi đã mở chưa
-        if (currentChatFriend !== data.from) {
-            // Mở cửa sổ chat với người gửi
-            openChat(data.from);
-
-        } else {
-            // Hiển thị tin nhắn đến
+        // Nếu chat đang mở với người gửi, hiển thị tin nhắn mà không cần gọi lại openChat
+        if (currentChatFriend === data.from && isChatOpened) {
             const dateSent = data.date_sent ? new Date(data.date_sent) : new Date();
-            displayMessage(data.from, data.message, dateSent, null, '0');
+            displayMessage(data.from, data.message, dateSent, null, '0', data.type || 'text', data.size || null);
+        } else if (!isChatOpened) {
+            openChat(data.from);
         }
     });
 
-    // Lắng nghe sự kiện messages-seen
+    // Lắng nghe sự kiện messages-seen và cập nhật trạng thái tin nhắn
     socket.on('messages-seen', (data) => {
         const recipientUsername = data.from;
+        if (currentChatFriend !== recipientUsername) return;
 
-        if (currentChatFriend !== recipientUsername) {
-            return; // Không làm gì nếu không chat với người này
-        }
-
-        // Cập nhật trạng thái của các tin nhắn đã gửi
-        const messageElements = document.querySelectorAll('.message.self');
-
+        const messageElements = document.querySelectorAll('.message-container.self-container .text-message, .message-container.self-container .file-message');
         messageElements.forEach((messageElement) => {
-            messageElement.dataset.status = '1'; // Đánh dấu là đã xem
+            messageElement.dataset.status = '1';
         });
     });
 

@@ -6,12 +6,14 @@ const PrivateMessage = require('../models/PrivateMess');
 
 // Lưu một tin nhắn riêng tư mới
 router.post('/private-messages', async (req, res) => {
-    const { content, user_sent, user_receive, date_sent } = req.body;
+    const { content, user_sent, user_receive, type, size, date_sent } = req.body;
     try {
         const newMessage = new PrivateMessage({
             content,
             user_sent,
             user_receive,
+            type,
+            size,
             status: 0,
             date_sent: date_sent || new Date(),
             date_seen: null

@@ -227,16 +227,19 @@ io.on('connection', (socket) => {
         const toUsername = data.to;
         const message = data.message;
         const fromUsername = socket.username;
+        const type = data.type || 'text';
+        const size = data.size || null;
         const dateSent = data.date_sent || new Date().toISOString();
-    
+        
         const toSocketId = userSockets[toUsername];
         if (toSocketId && toSocketId !== socket.id) {
-            // Only send the message to the recipient, not the sender
             io.to(toSocketId).emit('private-message', {
                 from: fromUsername,
                 to: toUsername,
                 message: message,
-                date_sent: dateSent
+                date_sent: dateSent,
+                type: type,
+                size: size
             });
         }
     });

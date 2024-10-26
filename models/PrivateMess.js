@@ -15,6 +15,15 @@ const PrivateMessageSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    type: {
+        type: String,
+        enum: ['text', 'file'],
+        default: 'text'
+    },
+    size: {
+        type: String,
+        default: null
+    },
     status: {
         type: Number,
         default: 0 // 0: not seen, 1: seen
