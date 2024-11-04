@@ -63,7 +63,7 @@ socket.on('message', (data) => {
         
         // Luôn luôn thêm tin nhắn vào thẻ hiện tại (dù có thay đổi hay không)
         const textElement = document.createElement('p'); // Hiển thị nội dung tin nhắn
-        textElement.textContent = data.text;
+        textElement.innerHTML = formatMessageWithLinks(data.text);
 
         // Thêm nội dung tin nhắn vào khối cuối cùng trong khối chứa tin nhắn
         messages.lastElementChild.appendChild(textElement);
@@ -81,6 +81,13 @@ socket.on('message', (data) => {
     messages.scrollTop = messages.scrollHeight;  // Tự động cuộn xuống cuối cùng
 });
 
+// Hàm định dạng tin nhắn với hyperlink
+function formatMessageWithLinks(message) {
+    const urlRegex = /((https?:\/\/[^\s]+))/g;
+    return message.replace(urlRegex, (url) => {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    });
+}
 
 // Hàm gửi tin nhắn
 function sendMessage() {

@@ -14,6 +14,10 @@ let pinnedVideoId = null; // Lưu trữ ID của video đang được ghim
 let currentUserId = null; // ID của chính bản thân user
 const peers = {};
 
+// Khai báo biến toàn cục cho video chính và nhãn người dùng
+let mainVideoElement = document.querySelector('.main-video-box video');
+let mainUserLabel = document.querySelector('.main-video-box .user-label');
+
 // Hàm tạo stream video giả (màn hình đen)
 function createDummyVideoStream() {
     const canvas = document.createElement('canvas');
@@ -70,48 +74,6 @@ async function initMedia() {
     }
 }
 
-
-// Xử lý khi không thể sử dụng camera hoặc đang được sử dụng
-async function handleCameraUnavailable() {
-    try {
-        // Thử truy cập chỉ micro
-        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Sử dụng stream video giả và âm thanh thực
-        const dummyVideoStream = createDummyVideoStream();
-        const combinedStream = new MediaStream([...dummyVideoStream.getVideoTracks(), ...audioStream.getAudioTracks()]);
-        setupStreams(combinedStream);
-    } catch (err) {
-        console.error('Lỗi khi truy cập thiết bị âm thanh.', err);
-        // Sử dụng video giả và không có âm thanh
-        const dummyVideoStream = createDummyVideoStream();
-        setupStreams(dummyVideoStream);
-    }
-}
-
-// Xử lý khi không tìm thấy camera
-async function handleNoCamera() {
-    try {
-        // Thử truy cập chỉ micro
-        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Sử dụng stream video giả và âm thanh thực
-        const dummyVideoStream = createDummyVideoStream();
-        const combinedStream = new MediaStream([...dummyVideoStream.getVideoTracks(), ...audioStream.getAudioTracks()]);
-        setupStreams(combinedStream);
-    } catch (err) {
-        console.error('Lỗi khi truy cập thiết bị âm thanh.', err);
-        // Sử dụng video giả và không có âm thanh
-        const dummyVideoStream = createDummyVideoStream();
-        setupStreams(dummyVideoStream);
-    }
-}
-
-// Xử lý khi không có thiết bị media
-async function handleNoMedia() {
-    // Sử dụng video giả và không có âm thanh
-    const dummyVideoStream = createDummyVideoStream();
-    setupStreams(dummyVideoStream);
-}
-
 // Hàm xử lý khi video của chính bản thân được hiển thị
 function setupStreams(stream) {
     cameraStream = stream;
@@ -119,12 +81,10 @@ function setupStreams(stream) {
     recordingStream = stream.clone();
     
     // Gắn stream của chính bản thân vào video chính
-    const localVideo = document.getElementById('localVideo');
-    localVideo.srcObject = localStream;
+    mainVideoElement.srcObject = localStream;
 
     // Gán nhãn là "You" cho video của chính bản thân
-    const localUserLabel = document.getElementById('localUserLabel');
-    localUserLabel.textContent = 'You';
+    mainUserLabel.textContent = 'You';
 
     // Phát sự kiện 'ready' tới server
     socket.emit('ready', { username, roomId });
@@ -132,10 +92,6 @@ function setupStreams(stream) {
 
 // Hàm hoán đổi video giữa người dùng và người khác
 function swapVideos(userId) {
-    const mainVideoBox = document.querySelector('.main-video-box');
-    const mainVideoElement = mainVideoBox.querySelector('video');
-    const mainUserLabel = mainVideoBox.querySelector('.user-label');
-
     const remoteVideoBox = document.getElementById(`video-container-${userId}`);
     const remoteVideoElement = remoteVideoBox.querySelector('video');
     const remoteUserLabel = remoteVideoBox.querySelector('.user-label');
@@ -165,10 +121,6 @@ document.addEventListener('click', (event) => {
 
 // Hàm đổi video về video của chính bản thân nếu video đang ghim ngắt kết nối
 function restoreLocalVideo() {
-    const mainVideoBox = document.querySelector('.main-video-box');
-    const mainVideoElement = mainVideoBox.querySelector('video');
-    const mainUserLabel = mainVideoBox.querySelector('.user-label');
-
     // Đổi video trở lại video của chính bản thân
     mainVideoElement.srcObject = localStream;
     mainUserLabel.textContent = 'You';
@@ -215,8 +167,12 @@ document.getElementById('toggleDisplay').addEventListener('click', async () => {
                 localStream.removeTrack(screenTrack);
                 localStream.addTrack(cameraStream.getVideoTracks()[0]);
                 screenStream = null;
-                localVideo.srcObject = localStream;
-                localVideo.classList.remove('screen-video');
+
+                // Chỉ cập nhật video chính nếu không có video nào đang được ghim
+                if (!pinnedVideoId) {
+                    mainVideoElement.srcObject = localStream;
+                    mainVideoElement.classList.remove('screen-video');
+                }
 
                 // Đặt lại nút về màu ban đầu khi dừng chia sẻ màn hình
                 toggleDisplayButton.classList.remove('btn-danger');
@@ -228,8 +184,11 @@ document.getElementById('toggleDisplay').addEventListener('click', async () => {
                 });
             };
 
-            localVideo.srcObject = localStream;
-            localVideo.classList.add('screen-video');
+            // Chỉ cập nhật video chính nếu không có video nào đang được ghim
+            if (!pinnedVideoId) {
+                mainVideoElement.srcObject = localStream;
+                mainVideoElement.classList.add('screen-video');
+            }
 
             // Chuyển nút thành màu đỏ khi bắt đầu chia sẻ màn hình
             toggleDisplayButton.classList.remove('btn-outline-primary');
@@ -250,8 +209,12 @@ document.getElementById('toggleDisplay').addEventListener('click', async () => {
         screenStream = null;
         localStream.removeTrack(localStream.getVideoTracks()[0]);
         localStream.addTrack(cameraStream.getVideoTracks()[0]);
-        localVideo.srcObject = localStream;
-        localVideo.classList.remove('screen-video');
+
+        // Chỉ cập nhật video chính nếu không có video nào đang được ghim
+        if (!pinnedVideoId) {
+            mainVideoElement.srcObject = localStream;
+            mainVideoElement.classList.remove('screen-video');
+        }
 
         // Đặt lại nút về màu ban đầu khi dừng chia sẻ màn hình
         toggleDisplayButton.classList.remove('btn-danger');
@@ -332,7 +295,6 @@ toggleMicButton.addEventListener('click', () => {
 
     socket.emit('toggle-mic', micEnabled);
 });
-
 
 // Hàm thêm video từ người dùng khác
 function addRemoteVideo(userId, username, stream) {
