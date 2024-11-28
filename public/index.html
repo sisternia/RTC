@@ -34,10 +34,15 @@
             <button id="leaveRoom" class="btn btn-outline-danger">
                 <i class="bi bi-box-arrow-right"></i>
             </button>
+            <!-- Biểu tượng chat -->
+            <button id="toggleChat" class="btn btn-outline-primary">
+                <i class="bi bi-chat-left"></i>
+            </button>
         </div>
     </div>
 
-    <div id="chat-container">
+    <!-- Khu vực chat -->
+    <div id="chat-container" class="hidden">
         <div id="chat-header">
             <button id="chatTab" class="btn btn-outline-primary">Chat</button>
             <button id="userTab" class="btn btn-outline-primary">Users</button>
@@ -45,7 +50,7 @@
         <div id="messages"></div>
         <div id="user-list"></div>
         <div id="chat-controls">
-            <textarea id="messageInput" placeholder="Type your message here..." class="form-control"></textarea>
+            <textarea id="messageInput" placeholder="Nhập tin nhắn ..." class="form-control"></textarea>
             <button id="sendMessage" class="btn btn-outline-primary"><i class="bi bi-send"></i></button>
             <button id="startRecording" class="btn btn-outline-primary" data-recording="false"><i class="bi bi-record"></i></button>
         </div>
@@ -53,6 +58,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script src="js/main.js"></script>
     <script src="js/socket-connection.js"></script>

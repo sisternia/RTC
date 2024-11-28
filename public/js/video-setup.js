@@ -92,29 +92,32 @@ function setupStreams(stream) {
 
 // Hàm hoán đổi video giữa người dùng và người khác
 function swapVideos(userId) {
-    const remoteVideoBox = document.getElementById(`video-container-${userId}`);
+    const remoteVideoBox = document.getElementById(`video-card-${userId}`);
     const remoteVideoElement = remoteVideoBox.querySelector('video');
     const remoteUserLabel = remoteVideoBox.querySelector('.user-label');
 
-    // Hoán đổi stream video giữa hai video
-    const tempStream = mainVideoElement.srcObject;
-    mainVideoElement.srcObject = remoteVideoElement.srcObject;
-    remoteVideoElement.srcObject = tempStream;
+    // Kiểm tra nếu video remote là của người dùng khác và có video stream
+    if (remoteVideoElement.srcObject) {
+        // Hoán đổi stream video giữa hai video
+        const tempStream = mainVideoElement.srcObject;
+        mainVideoElement.srcObject = remoteVideoElement.srcObject;
+        remoteVideoElement.srcObject = tempStream;
 
-    // Hoán đổi label giữa hai video
-    const tempLabel = mainUserLabel.textContent;
-    mainUserLabel.textContent = remoteUserLabel.textContent;
-    remoteUserLabel.textContent = tempLabel;
+        // Hoán đổi label giữa hai video
+        const tempLabel = mainUserLabel.textContent;
+        mainUserLabel.textContent = remoteUserLabel.textContent;
+        remoteUserLabel.textContent = tempLabel;
 
-    // Cập nhật lại trạng thái ID của video đang được ghim
-    pinnedVideoId = userId;
+        // Cập nhật lại trạng thái ID của video đang được ghim
+        pinnedVideoId = userId;
+    }
 }
 
 // Thêm sự kiện click vào icon pin
 document.addEventListener('click', (event) => {
     if (event.target.classList.contains('pin-icon')) {
-        const videoContainer = event.target.closest('.video-box');
-        const userId = videoContainer.id.split('-')[2]; // Lấy userId từ ID của video container
+        const videoContainer = event.target.closest('.card-body');
+        const userId = videoContainer.closest('.card').id.split('-')[2]; // Lấy userId từ ID của video card
         swapVideos(userId);
     }
 });
@@ -126,6 +129,14 @@ function restoreLocalVideo() {
     mainUserLabel.textContent = 'You';
 
     pinnedVideoId = null; // Reset trạng thái ghim
+}
+
+// Bắt sự kiện khi không có video ghim
+function checkPinnedVideo() {
+    if (!pinnedVideoId) {
+        mainVideoElement.srcObject = localStream;
+        mainUserLabel.textContent = 'You';
+    }
 }
 
 // Bắt đầu chia sẻ màn hình
@@ -298,10 +309,16 @@ toggleMicButton.addEventListener('click', () => {
 
 // Hàm thêm video từ người dùng khác
 function addRemoteVideo(userId, username, stream) {
-    const videoContainer = document.createElement('div');
-    videoContainer.className = 'secondary-video-box video-box';
-    videoContainer.id = `video-container-${userId}`;
+    // Tạo thẻ card
+    const card = document.createElement('div');
+    card.className = 'card video-card';  // Thêm class 'card'
+    card.id = `video-card-${userId}`;  // Thêm ID cho video card
 
+    // Tạo thẻ card-body chứa các phần tử bên trong
+    const cardBody = document.createElement('div');
+    cardBody.className = 'card-body';
+
+    // Thẻ tiêu đề cho card (Hiển thị tên người dùng)
     const userLabel = document.createElement('div');
     userLabel.className = 'user-label';
 
@@ -312,21 +329,37 @@ function addRemoteVideo(userId, username, stream) {
         userLabel.textContent = username;
     }
 
+    // Tạo phần video cho người dùng từ xa
     const remoteVideo = document.createElement('video');
     remoteVideo.id = `video-${userId}`;
     remoteVideo.autoplay = true;
 
+    // Kiểm tra nếu có video track
     if (stream.getVideoTracks().length > 0) {
         remoteVideo.srcObject = stream;
     } else {
         remoteVideo.srcObject = createDummyVideoStream();
     }
 
+    // Tạo biểu tượng pin cho video
     const pinIcon = document.createElement('i');
     pinIcon.className = 'bi bi-pin pin-icon';
 
-    videoContainer.appendChild(userLabel);
-    videoContainer.appendChild(remoteVideo);
-    videoContainer.appendChild(pinIcon);
-    document.getElementById('remoteVideos').appendChild(videoContainer);
+    // Thêm các phần tử vào thẻ card-body
+    cardBody.appendChild(userLabel);
+    cardBody.appendChild(remoteVideo);
+    cardBody.appendChild(pinIcon);
+
+    // Thêm thẻ card-body vào thẻ card
+    card.appendChild(cardBody);
+
+    // Thêm thẻ card vào khu vực hiển thị video từ xa
+    document.getElementById('remoteVideos').appendChild(card);
 }
+
+// Lắng nghe sự kiện nhấn vào biểu tượng chat để hiển thị hoặc ẩn khu vực chat
+document.getElementById('toggleChat').addEventListener('click', () => {
+    const chatContainer = document.getElementById('chat-container');
+    // Toggle class 'hidden' để ẩn/hiển thị chat
+    chatContainer.classList.toggle('hidden');
+});

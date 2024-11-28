@@ -25,9 +25,10 @@ body {
 /* Chứa tất cả các video trong giao diện */
 #video-streams {
     display: flex;
+    flex-direction: column; /* Thay đổi từ row sang column */
     gap: 10px;
     flex-grow: 1;
-    height: calc(100% - 60px);
+    height: calc(100% - 60px); /* Giữ chiều cao cho phần video */
     overflow: hidden;
 }
 
@@ -40,20 +41,18 @@ body {
     align-items: center;
     border: 1px solid #ccc;
     padding: 5px;
-    /* background-color: #f8f9fa; */
     overflow: hidden;
     max-height: 100%;
 }
 
 /* Chứa các video khác */
 .secondary-video-box {
-    flex: 0.5;
-    position: relative;
-    flex-direction: column;
+    flex: 1; /* Điều chỉnh chiều cao */
+    display: flex;
+    flex-direction: row; /* Hiển thị các video con theo chiều ngang */
+    gap: 10px;
     justify-content: center;
     align-items: center;
-    /* border: 1px solid #ccc; */
-    padding: 5px;
     background-color: #f8f9fa;
     overflow: hidden;
     max-height: 100%;
@@ -96,13 +95,17 @@ video {
 /* ========== Chat and User List Container ========== */
 /* Chứa khu vực chat và danh sách người dùng */
 #chat-container {
-    width: 350px;
+    width: 300px;
     border-left: 1px solid #ccc;
     padding: 10px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     height: 100vh;
+}
+
+#chat-container.hidden {
+    display: none;
 }
 
 /* ========== Chat Header ========== */
@@ -191,6 +194,11 @@ video {
     padding: 5px 10px;
 }
 
+#messages audio {
+    width: 250px;  /* Đặt chiều rộng của audio là 250px */
+    margin-top: 5px;  /* Tạo khoảng cách phía trên cho audio */
+}
+
 /* ========== Pin Icon Styling ========== */
 /* Nút ghim video */
 .pin-icon {
@@ -210,3 +218,46 @@ video {
     opacity: 1;
 }
 
+/* ========== Remote Video Card ========== */
+/* Cấu hình thẻ card cho video của người dùng từ xa */
+.card {
+    width: 100%; /* Thẻ card chiếm toàn bộ chiều rộng */
+    max-width: 320px; /* Đặt chiều rộng tối đa cho mỗi thẻ card */
+    margin: 5px; /* Tạo khoảng cách giữa các thẻ card */
+    border: 1px solid #ccc; /* Đặt viền cho card */
+    border-radius: 10px; /* Bo tròn góc card */
+    background-color: #f8f9fa; /* Màu nền cho card */
+}
+
+.card-body {
+    padding: 10px; /* Khoảng cách giữa các phần tử trong card */
+    display: flex;
+    flex-direction: column; /* Sắp xếp các phần tử theo chiều dọc */
+    align-items: center;
+}
+
+.card-body video {
+    width: 100%; /* Chiều rộng của video chiếm hết chiều rộng thẻ card */
+    height: 200px; /* Chiều cao của video */
+    border-radius: 5px; /* Bo góc cho video */
+    object-fit: cover; /* Đảm bảo video lấp đầy khu vực thẻ card mà không bị méo */
+}
+
+/* ========== Pin Icon Styling ========== */
+/* Nút ghim video */
+.pin-icon {
+    position: absolute;
+    top: 50%; /* Đặt pin ở giữa theo chiều dọc */
+    left: 50%; /* Đặt pin ở giữa theo chiều ngang */
+    transform: translate(-50%, -50%); /* Dịch chuyển để đảm bảo nó chính giữa */
+    font-size: 32px;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 2; /* Đảm bảo icon nằm trên video */
+}
+
+/* Hiển thị icon pin khi hover vào video-box */
+.card:hover .pin-icon {
+    opacity: 1;
+}

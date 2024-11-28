@@ -66,7 +66,7 @@ socket.on('user-disconnected', userId => {
 });
 
 
-// Lắng nghe sự kiện người dùng ngắt kết nối
+// Khi một người dùng ngắt kết nối
 socket.on('user-disconnected', (disconnectedUserId) => {
     console.log(`Người dùng ${disconnectedUserId} đã thoát`);
 
@@ -78,9 +78,16 @@ socket.on('user-disconnected', (disconnectedUserId) => {
     // Xóa video của người dùng đã ngắt kết nối khỏi giao diện
     const videoContainer = document.getElementById(`video-container-${disconnectedUserId}`);
     if (videoContainer) {
-        videoContainer.remove();
+        videoContainer.remove(); // Xóa khối chứa video của người dùng
+    }
+
+    // Nếu người dùng rời phòng, hãy xóa thẻ video của họ (video card)
+    const videoCard = document.getElementById(`video-card-${disconnectedUserId}`);
+    if (videoCard) {
+        videoCard.remove(); // Xóa video card của người dùng
     }
 });
+
 
 // Khi người dùng bật/tắt camera
 socket.on('toggle-camera', (data) => {
@@ -111,7 +118,16 @@ socket.on('user-list', (users) => {
 
 // Xử lý khi rời khỏi phòng
 socket.on('leave-room', () => {
+    console.log('Rời khỏi phòng...');
+
+    // Xóa video card của người dùng khi họ rời phòng
+    const videoCard = document.getElementById(`video-card-${socket.id}`);
+    if (videoCard) {
+        videoCard.remove(); // Xóa video card của người dùng hiện tại
+    }
+
     socket.disconnect(); // Ngắt kết nối socket
     window.location.href = 'room.html'; // Chuyển về trang quản lý phòng
 });
+
 
