@@ -94,6 +94,16 @@ video {
 
 /* ========== Chat and User List Container ========== */
 /* Chứa khu vực chat và danh sách người dùng */
+#user-list-container {
+    width: 200px;
+    border-left: 1px solid #ccc;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100vh;
+}
+
 #chat-container {
     width: 300px;
     border-left: 1px solid #ccc;
@@ -109,7 +119,6 @@ video {
 }
 
 /* ========== Chat Header ========== */
-/* Chứa các nút chuyển đổi giữa chat và danh sách người dùng */
 #chat-header {
     display: flex;
     justify-content: space-between;
@@ -117,6 +126,17 @@ video {
 }
 
 #chat-header button {
+    flex: 1;
+}
+
+/* ========== User List Header ========== */
+#user-list-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+#user-list-header button {
     flex: 1;
 }
 
@@ -166,7 +186,8 @@ video {
     border: 1px solid #ccc;
     padding: 10px;
     flex-grow: 1;
-    display: none; /* Ẩn mặc định */
+    display: flex; /* Sửa lại để hiển thị mặc định */
+    flex-direction: column;
 }
 
 /* ========== Chat Controls ========== */
@@ -241,20 +262,6 @@ video {
     height: 200px; /* Chiều cao của video */
     border-radius: 5px; /* Bo góc cho video */
     object-fit: cover; /* Đảm bảo video lấp đầy khu vực thẻ card mà không bị méo */
-}
-
-/* ========== Pin Icon Styling ========== */
-/* Nút ghim video */
-.pin-icon {
-    position: absolute;
-    top: 50%; /* Đặt pin ở giữa theo chiều dọc */
-    left: 50%; /* Đặt pin ở giữa theo chiều ngang */
-    transform: translate(-50%, -50%); /* Dịch chuyển để đảm bảo nó chính giữa */
-    font-size: 32px;
-    color: white;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 2; /* Đảm bảo icon nằm trên video */
 }
 
 /* Hiển thị icon pin khi hover vào video-box */

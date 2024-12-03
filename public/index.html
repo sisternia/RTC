@@ -10,6 +10,14 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Khu hiển thị User List-->
+    <div id="user-list-container">
+        <div id="user-list-header">
+            <button id="userTab" class="btn btn-outline-primary">Users</button>
+        </div>
+        <div id="user-list"></div>
+    </div>
+
     <div id="video-container">
         <div id="video-streams">
             <div class="main-video-box video-box">
@@ -41,14 +49,12 @@
         </div>
     </div>
 
-    <!-- Khu vực chat -->
+    <!-- Khu vực chat (ẩn mặc định và sẽ được hiển thị khi thao tác toggle) -->
     <div id="chat-container" class="hidden">
         <div id="chat-header">
             <button id="chatTab" class="btn btn-outline-primary">Chat</button>
-            <button id="userTab" class="btn btn-outline-primary">Users</button>
         </div>
         <div id="messages"></div>
-        <div id="user-list"></div>
         <div id="chat-controls">
             <textarea id="messageInput" placeholder="Nhập tin nhắn ..." class="form-control"></textarea>
             <button id="sendMessage" class="btn btn-outline-primary"><i class="bi bi-send"></i></button>

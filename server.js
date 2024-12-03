@@ -1,8 +1,8 @@
 // \webrtc\server.js
 
 const express = require('express');
-const https = require('https'); // Use https instead of http
-const fs = require('fs'); // To read SSL certificate files
+const https = require('https'); 
+const fs = require('fs'); 
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
 const authAccount = require('./routes/auth_account');

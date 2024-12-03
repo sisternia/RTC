@@ -1,4 +1,4 @@
-// \webrtc\routes\auth.js
+// \webrtc\routes\auth_account.js
 const express = require('express');
 const bcrypt = require('bcrypt');
 const User = require('../models/User');

@@ -9,19 +9,22 @@ Cấu trúc
 |-- /node_modules
 |-- /public
 |   |-- /css
-|   |-- |-- style.css
+|   |   |-- style.css
 |   |-- /js
-|   |-- |-- audio-recording.js
-|   |-- |-- main.js
-|   |-- |-- friend.js
-|   |-- |-- room.js
-|   |-- |-- socket-connection.js
-|   |-- |-- video-setup.js
-|   |-- |-- chat-user.js
-|   |-- |-- chat-room.js
+|   |   |-- audio-recording.js
+|   |   |-- main.js
+|   |   |-- friend.js
+|   |   |-- room.js
+|   |   |-- infor_user.js
+|   |   |-- change_pass.js
+|   |   |-- socket-connection.js
+|   |   |-- video-setup.js
+|   |   |-- chat-user.js
+|   |   |-- chat-room.js
 |   |-- login.html
 |   |-- chat_user.html
 |   |-- infor_user.html
+|   |-- change_pass.html
 |   |-- search_user.html
 |   |-- friend_user.html
 |   |-- register.html
@@ -31,6 +34,7 @@ Cấu trúc
 |   |-- verify.html
 |-- /ssl
 |-- /uploads
+|-- /img
 |-- /routes
 |   |-- auth_friend.js
 |   |-- auth_account.js
@@ -38,7 +42,6 @@ Cấu trúc
 |-- main.js
 |-- package.json
 |-- server.js
-
 
 npm init -y
 npm install express socket.io simple-peer

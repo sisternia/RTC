@@ -5,24 +5,9 @@ let lastSender = ''; // Biến lưu trữ tên người gửi tin nhắn trướ
 let lastTime = '';   // Biến lưu trữ thời gian của tin nhắn trước
 
 chatTab.classList.add('active');
+userTab.classList.add('active');
 messages.style.display = 'block';
 document.getElementById('chat-controls').style.display = 'flex'; // Hiển thị chat controls khi ở tab Chat
-
-chatTab.addEventListener('click', () => {
-    messages.style.display = 'block';
-    userList.style.display = 'none';
-    document.getElementById('chat-controls').style.display = 'flex'; // Hiển thị chat controls khi ở tab Chat
-    chatTab.classList.add('active');
-    userTab.classList.remove('active');
-});
-
-userTab.addEventListener('click', () => {
-    messages.style.display = 'none';
-    userList.style.display = 'block';
-    document.getElementById('chat-controls').style.display = 'none'; // Ẩn chat controls khi ở tab Users
-    chatTab.classList.remove('active');
-    userTab.classList.add('active');
-});
 
 // Gửi tin nhắn khi nhấn nút "Gửi"
 sendMessageButton.addEventListener('click', sendMessage);
@@ -97,3 +82,10 @@ function sendMessage() {
         messageInput.value = '';
     }
 }
+
+// Lắng nghe sự kiện nhấn vào biểu tượng chat để hiển thị hoặc ẩn khu vực chat
+document.getElementById('toggleChat').addEventListener('click', () => {
+    const chatContainer = document.getElementById('chat-container');
+    // Toggle class 'hidden' để ẩn/hiển thị chat
+    chatContainer.classList.toggle('hidden');
+});

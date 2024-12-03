@@ -356,10 +356,3 @@ function addRemoteVideo(userId, username, stream) {
     // Thêm thẻ card vào khu vực hiển thị video từ xa
     document.getElementById('remoteVideos').appendChild(card);
 }
-
-// Lắng nghe sự kiện nhấn vào biểu tượng chat để hiển thị hoặc ẩn khu vực chat
-document.getElementById('toggleChat').addEventListener('click', () => {
-    const chatContainer = document.getElementById('chat-container');
-    // Toggle class 'hidden' để ẩn/hiển thị chat
-    chatContainer.classList.toggle('hidden');
-});
