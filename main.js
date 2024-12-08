@@ -39,7 +39,7 @@ function createWindow(clientNumber) {
     });
 
     // Load trang login
-    mainWindow.loadURL('https://localhost:3000/login.html');
+    mainWindow.loadURL('https://192.168.1.6:3000/login.html');
 
     mainWindow.webContents.openDevTools();
     
