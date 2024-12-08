@@ -1,4 +1,5 @@
 // \webrtc\models\Room.js
+// \webrtc\models\Room.js
 const mongoose = require('mongoose');
 
 const RoomSchema = new mongoose.Schema({
@@ -18,7 +19,16 @@ const RoomSchema = new mongoose.Schema({
     users: { // Số lượng người dùng trong phòng
         type: Number,
         default: 0
+    },
+    isPasswordProtected: {
+        type: Boolean,
+        default: false
+    },
+    password: {
+        type: String,
+        default: null
     }
 });
 
 module.exports = mongoose.model('Room', RoomSchema);
+

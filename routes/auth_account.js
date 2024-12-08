@@ -4,19 +4,20 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const Verify = require('../models/Verify');
 const nodemailer = require('nodemailer');
+const fs = require('fs');
+const path = require('path');
 
 const router = express.Router();
 
-// Cấu hình nodemailer để gửi email
+// Cấu hình nodemailer
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // Sử dụng Gmail
+    service: 'gmail',
     auth: {
-        user: 'vu784512000@gmail.com', // Thay bằng email của bạn
-        pass: 'ehuh wxze qoaj nzwa' // Thay bằng mật khẩu email của bạn
+        user: 'vu784512000@gmail.com',
+        pass: 'ehuh wxze qoaj nzwa'
     }
 });
 
-// Route xử lý đăng ký người dùng
 router.post('/register', async (req, res) => {
     const { username, email, password } = req.body;
 
@@ -30,10 +31,9 @@ router.post('/register', async (req, res) => {
         const newUser = new User({ username, email, password: hashedPassword });
         await newUser.save();
 
-        // Tạo mã xác thực 6 chữ số ngẫu nhiên
+        // Tạo mã xác thực 6 chữ số
         const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Lưu mã xác thực và trạng thái vào bảng Verify
         const verify = new Verify({
             user: newUser._id,
             verify_code: verifyCode,
@@ -41,7 +41,6 @@ router.post('/register', async (req, res) => {
         });
         await verify.save();
 
-        // Gửi mã xác thực tới email của người dùng
         const mailOptions = {
             from: 'your_email@gmail.com',
             to: email,
@@ -61,7 +60,6 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Route xử lý xác thực mã 6 chữ số
 router.post('/verify', async (req, res) => {
     const { username, verify_code } = req.body;
 
@@ -77,7 +75,7 @@ router.post('/verify', async (req, res) => {
         }
 
         if (verification.verify_code === verify_code) {
-            verification.verify_status = '1'; // Đặt trạng thái đã xác thực
+            verification.verify_status = '1';
             await verification.save();
             return res.json({ success: true, message: 'Account verified successfully' });
         } else {
@@ -88,7 +86,6 @@ router.post('/verify', async (req, res) => {
     }
 });
 
-// Route xử lý đăng nhập người dùng
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
@@ -118,7 +115,6 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Route xử lý lấy thông tin người dùng
 router.get('/user-info', async (req, res) => {
     const { username } = req.query;
 
@@ -132,7 +128,8 @@ router.get('/user-info', async (req, res) => {
             success: true,
             user: {
                 username: user.username,
-                email: user.email
+                email: user.email,
+                avatar: user.avatar || ''
             }
         });
     } catch (error) {
@@ -140,7 +137,6 @@ router.get('/user-info', async (req, res) => {
     }
 });
 
-// Route xử lý quên mật khẩu
 router.post('/reset-password', async (req, res) => {
     const { username, email } = req.body;
 
@@ -150,15 +146,11 @@ router.post('/reset-password', async (req, res) => {
             return res.json({ success: false, message: 'Invalid username or email' });
         }
 
-        // Tạo mật khẩu mới 9 ký tự gồm số, chữ cái và 1 ký tự đặc biệt
         const newPassword = Math.random().toString(36).slice(-8) + '!';
-
-        // Hash mật khẩu mới trước khi lưu
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         user.password = hashedPassword;
         await user.save();
 
-        // Gửi mật khẩu mới tới email của người dùng
         const mailOptions = {
             from: 'your_email@gmail.com',
             to: email,
@@ -178,7 +170,6 @@ router.post('/reset-password', async (req, res) => {
     }
 });
 
-// Route xử lý đổi mật khẩu
 router.post('/change-password', async (req, res) => {
     const { username, oldPassword, newPassword } = req.body;
 
@@ -207,7 +198,6 @@ router.post('/change-password', async (req, res) => {
     }
 });
 
-// Route xử lý tự động hoàn thành khi tìm kiếm người dùng
 router.get('/autocomplete-users', async (req, res) => {
     const { query } = req.query;
     if (!query) {
@@ -215,11 +205,10 @@ router.get('/autocomplete-users', async (req, res) => {
     }
 
     try {
-        // Tìm kiếm người dùng có username chứa chuỗi tìm kiếm (không phân biệt hoa thường)
         const users = await User.find(
             { username: { $regex: query, $options: 'i' } },
             'username -_id'
-        ).limit(10); // Giới hạn số lượng kết quả nếu cần
+        ).limit(10);
 
         res.json({ success: true, users });
     } catch (error) {
@@ -227,7 +216,6 @@ router.get('/autocomplete-users', async (req, res) => {
     }
 });
 
-// Route xử lý tìm kiếm người dùng
 router.get('/search-users', async (req, res) => {
     const { query } = req.query;
     if (!query) {
@@ -235,7 +223,6 @@ router.get('/search-users', async (req, res) => {
     }
 
     try {
-        // Tìm kiếm tất cả người dùng có username chứa chuỗi tìm kiếm (không phân biệt hoa thường)
         const users = await User.find({
             username: { $regex: query, $options: 'i' }
         }, 'username -_id');
@@ -243,6 +230,50 @@ router.get('/search-users', async (req, res) => {
         res.json({ success: true, users });
     } catch (error) {
         res.json({ success: false, message: 'Lỗi khi tìm kiếm người dùng' });
+    }
+});
+
+// Route upload-avatar
+router.post('/upload-avatar', async (req, res) => {
+    const { username, image } = req.body;
+    if (!username || !image) {
+        return res.json({ success: false, message: 'Thiếu thông tin cần thiết' });
+    }
+
+    try {
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.json({ success: false, message: 'Người dùng không tồn tại' });
+        }
+
+        // image là base64, decode ra buffer
+        const matches = image.match(/^data:image\/(png|jpeg|jpg);base64,(.+)$/);
+        if (!matches) {
+            return res.json({ success: false, message: 'Dữ liệu ảnh không hợp lệ' });
+        }
+        const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+        const data = matches[2];
+        const buffer = Buffer.from(data, 'base64');
+
+        // Tạo tên file unique
+        const filename = `avatar_${username}_${Date.now()}.${ext}`;
+        const imgPath = path.join(__dirname, '../img', filename);
+
+        fs.writeFile(imgPath, buffer, async (err) => {
+            if (err) {
+                console.error('Lỗi khi ghi file ảnh:', err);
+                return res.json({ success: false, message: 'Lỗi khi lưu ảnh' });
+            }
+
+            // Cập nhật user.avatar
+            user.avatar = filename;
+            await user.save();
+
+            return res.json({ success: true, message: 'Cập nhật avatar thành công', filename });
+        });
+    } catch (error) {
+        console.error('Lỗi upload avatar:', error);
+        return res.json({ success: false, message: 'Lỗi server khi upload avatar' });
     }
 });
 

@@ -35,7 +35,12 @@ const PrivateMessageSchema = new mongoose.Schema({
     date_seen: {
         type: Date,
         default: null
+    },
+    filename: {
+        type: String,
+        default: null // Lưu tên file đã đổi trên server
     }
 });
 
 module.exports = mongoose.model('PrivateMessage', PrivateMessageSchema);
+

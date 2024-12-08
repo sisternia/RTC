@@ -11,7 +11,6 @@ const storage = multer.diskStorage({
         cb(null, path.join(__dirname, '../uploads'));
     },
     filename: function (req, file, cb) {
-        // Generate a unique filename using Date.now()
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const originalName = file.originalname;
         const extension = path.extname(originalName);
@@ -31,17 +30,28 @@ router.post('/private-messages', upload.single('file'), async (req, res) => {
     try {
         let savedMessage;
         if (type === 'file') {
+            // Lưu tên file gốc vào content, tên file đã đổi vào filename
+            const originalName = file.originalname;
             const newMessage = new PrivateMessage({
-                content: file.filename, // Save the unique file name
+                content: originalName,
                 user_sent,
                 user_receive,
-                type,
+                type: 'file',
                 size: (file.size / 1024).toFixed(2) + ' KB',
                 status: 0,
                 date_sent: date_sent || new Date(),
-                date_seen: null
+                date_seen: null,
+                filename: file.filename // Tên file duy nhất trên server
             });
             savedMessage = await newMessage.save();
+            res.status(200).json({
+                success: true, 
+                message: 'Message has been saved', 
+                data: { 
+                    content: savedMessage.content,
+                    filename: savedMessage.filename
+                }
+            });
         } else {
             const newMessage = new PrivateMessage({
                 content: content,
@@ -54,9 +64,13 @@ router.post('/private-messages', upload.single('file'), async (req, res) => {
                 date_seen: null
             });
             savedMessage = await newMessage.save();
+            res.status(200).json({
+                success: true, 
+                message: 'Message has been saved', 
+                data: { content: savedMessage.content }
+            });
         }
 
-        res.status(200).json({ success: true, message: 'Message has been saved', data: { content: savedMessage.content } });
     } catch (error) {
         console.error('Error saving private message:', error);
         res.status(500).json({ success: false, message: 'Error saving message' });
@@ -67,7 +81,7 @@ router.post('/private-messages', upload.single('file'), async (req, res) => {
 router.put('/private-messages/mark-as-seen', async (req, res) => {
     const { user_sent, user_receive } = req.body;
     try {
-        const result = await PrivateMessage.updateMany(
+        await PrivateMessage.updateMany(
             {
                 user_sent,
                 user_receive,
@@ -97,6 +111,7 @@ router.get('/private-messages', async (req, res) => {
                 { user_sent: user2, user_receive: user1 }
             ]
         }).sort({ date_sent: 1 });
+
         res.status(200).json({ success: true, messages });
     } catch (error) {
         console.error('Error retrieving private messages:', error);

@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <title>Phòng</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link  href="https://unpkg.com/cropperjs/dist/cropper.css" rel="stylesheet"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        /* CSS cho kết quả tìm kiếm */
         .search-result {
             padding: 8px;
             cursor: pointer;
@@ -22,13 +22,38 @@
         .search-modal-width{
             max-width: 34%;
         }
+        .room-card {
+            margin-bottom: 20px;
+        }
+        .room-card .card-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+        .card-text {
+            margin-bottom: 0.5rem;
+        }
+        .room-info {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .room-info .info-item {
+            flex: 1 1 45%;
+            margin-bottom: 0.5rem;
+        }
+        @media (max-width: 576px) {
+            .room-info .info-item {
+                flex: 1 1 100%;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container mt-5  ">
+    <div class="container mt-5">
         <div class="d-flex justify-content-between">
             <h2 class="text-center">AC Room</h2>
-            <!-- Nút User Profile -->
             <div class="dropdown">
                 <button class="btn btn-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-person-circle"></i> <span id="usernameDisplay"></span>
@@ -59,6 +84,21 @@
                             <label for="roomName" class="form-label">Tên phòng</label>
                             <input type="text" class="form-control" id="roomName" placeholder="Nhập tên phòng">
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Loại phòng</label><br>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="roomType" id="roomTypeNoPassword" value="no" checked>
+                                <label class="form-check-label" for="roomTypeNoPassword">Không có mật khẩu</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="roomType" id="roomTypePassword" value="yes">
+                                <label class="form-check-label" for="roomTypePassword">Có mật khẩu</label>
+                            </div>
+                        </div>
+                        <div class="mb-3" id="passwordFieldContainer" style="display:none;">
+                            <label for="roomPassword" class="form-label">Mật khẩu phòng</label>
+                            <input type="password" class="form-control" id="roomPassword" placeholder="Nhập mật khẩu phòng">
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
@@ -68,30 +108,37 @@
             </div>
         </div>
 
+        <!-- Modal nhập mật khẩu khi vào phòng -->
+        <div class="modal fade" id="enterRoomPasswordModal" tabindex="-1" aria-labelledby="enterRoomPasswordModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="enterRoomPasswordModalLabel">Nhập mật khẩu phòng</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="password" class="form-control" id="inputRoomPassword" placeholder="Nhập mật khẩu phòng">
+                        <div class="text-danger mt-2" id="wrongPasswordAlert" style="display:none;">Mật khẩu không đúng, vui lòng thử lại.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button id="checkRoomPasswordButton" class="btn btn-primary">Vào phòng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Main content with room list and friend list -->
         <div class="row">
             <div class="col-md-9">
-                <!-- Bảng hiển thị danh sách phòng -->
-                <table class="table table-bordered">
-                    <thead>
-                        <tr style="text-align: center;">
-                            <th>ID Phòng</th>
-                            <th>Tên Phòng</th>
-                            <th>Người tạo phòng</th>
-                            <th>Số người</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="roomTableBody">
-                        <!-- Các phòng sẽ được thêm vào đây -->
-                    </tbody>
-                </table>
+                <div id="roomCardContainer" class="row">
+                    <!-- Các card phòng sẽ được thêm vào đây -->
+                </div>
             </div>
             <div class="col-md-3">
-                <!-- Danh sách bạn bè -->
-                <h3 style="text-align: center;">Bạn bè</h3>
+                <h3 class="text-center">Bạn bè</h3>
                 <ul id="friendList" class="list-group">
-                    <!-- Friends will be listed here -->
+                    <!-- Friends sẽ được liệt kê ở đây -->
                 </ul>
             </div>
         </div>
@@ -111,6 +158,7 @@
     <script src="js/room.js"></script>
     <script src="js/friend.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+    <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
+
 </body>
 </html>

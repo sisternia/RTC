@@ -16,6 +16,10 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    avatar: {
+        type: String,
+        default: null // Lưu tên file ảnh đại diện, null nếu chưa có
+    },
     createdAt: {
         type: Date,
         default: Date.now
@@ -23,3 +27,4 @@ const UserSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('User', UserSchema);
+
