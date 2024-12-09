@@ -39,7 +39,7 @@
         document.getElementById('usernameDisplay').innerText = username; 
     }
 
-    const socket = io('https://192.168.1.6:3000');
+    const socket = io('https://localhost:3000');
     socket.emit('set-username', username);
     window.socket = socket;
     window.username = username;
