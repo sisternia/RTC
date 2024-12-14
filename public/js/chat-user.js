@@ -1,11 +1,10 @@
 // \webrtc\public\js\chat-user.js
-
 (async function() {
     const username = window.username;
     const socket = window.socket;
 
     if (!socket) {
-        console.error('Socket.io chưa được khởi tạo.');
+        console.error('Socket.io is not initialized.');
         return;
     }
 
@@ -21,6 +20,21 @@
     const fileIcon = document.querySelector('.bi-folder-symlink.icon');
     let selectedFile = null;
 
+    // Modal Elements
+    const imageModal = new bootstrap.Modal(document.getElementById('imageModal'), {
+        keyboard: true
+    });
+    const modalImage = document.getElementById('modalImage');
+    const imageModalLabel = document.getElementById('imageModalLabel');
+    const downloadModalImage = document.getElementById('downloadModalImage');
+    const zoomInButton = document.getElementById('zoomInButton');
+    const zoomOutButton = document.getElementById('zoomOutButton');
+
+    let currentScale = 1; // Initialize scale
+    const SCALE_STEP = 0.1; // Scale step for zooming
+    const MAX_SCALE = 3; // Maximum zoom scale
+    const MIN_SCALE = 0.5; // Minimum zoom scale
+
     fileIcon.addEventListener('click', () => {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
@@ -34,7 +48,7 @@
     window.openChat = async function(friendUsername, loadHistory = true) {
         currentChatFriend = friendUsername;
         isChatOpened = true;
-        chatFriendName.innerText = `Chat với ${friendUsername}`;
+        chatFriendName.innerText = `Chat with ${friendUsername}`;
         chatBox.innerHTML = '';
         chatContainer.style.display = 'flex';
 
@@ -60,10 +74,10 @@
                         );
                     });
                 } else {
-                    console.error('Lỗi khi tải lịch sử chat');
+                    console.error('Error loading chat history');
                 }
             } catch (error) {
-                console.error('Lỗi khi lấy lịch sử chat:', error);
+                console.error('Error fetching chat history:', error);
             }
         }
     };
@@ -90,10 +104,10 @@
                     friendList.appendChild(li);
                 });
             } else {
-                alert('Không thể lấy danh sách bạn bè');
+                alert('Unable to fetch friends list');
             }
         } catch (error) {
-            console.error('Lỗi khi lấy danh sách bạn bè:', error);
+            console.error('Error fetching friends list:', error);
         }
     }
 
@@ -111,8 +125,6 @@
             formData.append('file', selectedFile);
             formData.append('user_sent', username);
             formData.append('user_receive', currentChatFriend);
-            formData.append('type', 'file');
-            formData.append('size', (selectedFile.size / 1024).toFixed(2) + ' KB');
             formData.append('date_sent', new Date().toISOString());
 
             try {
@@ -122,24 +134,25 @@
                 });
                 const data = await response.json();
                 if (!data.success) {
-                    console.error('Lỗi khi lưu tin nhắn:', data.message);
+                    console.error('Error saving message:', data.message);
                 } else {
-                    const fileNameDisplay = data.data.content;  // tên gốc
-                    const fileNameServer = data.data.filename;  // tên lưu trên server
+                    const fileNameDisplay = data.data.content;  // Original name
+                    const fileNameServer = data.data.filename;  // Server-stored name
+                    const messageType = data.data.type; // 'file' or 'image'
 
-                    displayMessage(username, fileNameDisplay, new Date(), null, '0', 'file', (selectedFile.size / 1024).toFixed(2) + ' KB', fileNameServer);
+                    displayMessage(username, fileNameDisplay, new Date(), null, '0', messageType, (selectedFile.size / 1024).toFixed(2) + ' KB', fileNameServer);
                     
                     socket.emit('private-message', {
                         to: currentChatFriend,
                         message: fileNameDisplay,
                         filename: fileNameServer,
-                        type: 'file',
+                        type: messageType,
                         size: (selectedFile.size / 1024).toFixed(2) + ' KB',
                         date_sent: new Date().toISOString()
                     });
                 }
             } catch (error) {
-                console.error('Lỗi khi lưu tin nhắn:', error);
+                console.error('Error saving message:', error);
             }
 
             selectedFile = null;
@@ -173,10 +186,10 @@
             });
             const data = await response.json();
             if (!data.success) {
-                console.error('Lỗi khi lưu tin nhắn:', data.message);
+                console.error('Error saving message:', data.message);
             }
         } catch (error) {
-            console.error('Lỗi khi lưu tin nhắn:', error);
+            console.error('Error saving message:', error);
         }
 
         chatInput.value = '';
@@ -232,39 +245,63 @@
 
         const messageElement = document.createElement('div');
 
-        if (type === 'file') {
-            messageElement.classList.add('file-message-card');
-            const fileContainer = document.createElement('div');
-            fileContainer.className = 'file-message-card';
-            const fileIcon = document.createElement('div');
-            fileIcon.className = 'file-icon';
-            fileIcon.textContent = content.split('.').pop().toUpperCase();
+        if (type === 'file' || type === 'image') {
+            if (type === 'image') {
+                // Display image with modal
+                messageElement.className = 'image-message';
+                const img = document.createElement('img');
+                img.src = `/uploads/${filename}`;
+                img.alt = content;
+                img.className = 'image-message';
+                img.style.maxWidth = '100%';
+                img.style.borderRadius = '10px';
+                img.style.cursor = 'pointer';
+                img.style.transform = `scale(${currentScale})`;
+                img.style.transition = 'transform 0.3s ease';
+                img.addEventListener('click', () => {
+                    modalImage.src = `/uploads/${filename}`;
+                    imageModalLabel.textContent = `View Image: ${content}`;
+                    currentScale = 1; // Reset scale when opening
+                    modalImage.style.transform = `scale(${currentScale})`;
+                    imageModal.show();
+                });
+                messageElement.appendChild(img);
+            } else {
+                // Display file as card
+                messageElement.classList.add('file-message-card');
+                const fileContainer = document.createElement('div');
+                fileContainer.className = 'file-message-card';
+                const fileIcon = document.createElement('div');
+                fileIcon.className = 'file-icon';
+                fileIcon.textContent = content.split('.').pop().toUpperCase();
 
-            const fileDetails = document.createElement('div');
-            const fileNameDiv = document.createElement('div');
-            fileNameDiv.className = 'file-name';
-            fileNameDiv.textContent = truncateFileName(content, 10);
+                const fileDetails = document.createElement('div');
+                const fileNameDiv = document.createElement('div');
+                fileNameDiv.className = 'file-name';
+                fileNameDiv.textContent = truncateFileName(content, 10);
 
-            const fileSize = document.createElement('div');
-            fileSize.className = 'file-size';
-            fileSize.textContent = size;
+                const fileSize = document.createElement('div');
+                fileSize.className = 'file-size';
+                fileSize.textContent = size;
 
-            fileDetails.appendChild(fileNameDiv);
-            fileDetails.appendChild(fileSize);
-            fileContainer.appendChild(fileIcon);
-            fileContainer.appendChild(fileDetails);
+                fileDetails.appendChild(fileNameDiv);
+                fileDetails.appendChild(fileSize);
+                fileContainer.appendChild(fileIcon);
+                fileContainer.appendChild(fileDetails);
 
-            const downloadIcon = document.createElement('i');
-            downloadIcon.className = 'bi bi-arrow-down-square';
-            downloadIcon.style.cursor = 'pointer';
-            downloadIcon.title = 'Tải xuống';
-            downloadIcon.addEventListener('click', () => {
-                downloadFile(filename);
-            });
+                const downloadIcon = document.createElement('i');
+                downloadIcon.className = 'bi bi-arrow-down-square';
+                downloadIcon.style.cursor = 'pointer';
+                downloadIcon.title = 'Download';
+                downloadIcon.addEventListener('click', () => {
+                    downloadFile(filename);
+                });
 
-            messageElement.appendChild(fileContainer);
-            messageElement.appendChild(downloadIcon);
+                messageElement.appendChild(fileContainer);
+                messageElement.appendChild(downloadIcon);
+            }
         } else {
+            // Display text message
             messageElement.className = 'text-message';
             const textElement = document.createElement('div');
             textElement.className = 'text';
@@ -273,19 +310,27 @@
         }
 
         if (sender === username) {
-            messageElement.classList.add(type === 'file' ? 'file-message' : 'text-message', 'self');
+            if (type === 'image') {
+                messageElement.classList.add('image-message', 'self');
+            } else {
+                messageElement.classList.add(type === 'file' ? 'file-message' : 'text-message', 'self');
+            }
             messageContainer.classList.add('self-container');
             messageElement.dataset.messageId = messageId;
             messageElement.dataset.status = status;
         } else {
-            messageElement.classList.add(type === 'file' ? 'file-message' : 'text-message', 'other');
+            if (type === 'image') {
+                messageElement.classList.add('image-message', 'other');
+            } else {
+                messageElement.classList.add(type === 'file' ? 'file-message' : 'text-message', 'other');
+            }
             messageContainer.classList.add('other-container');
         }
 
         messageElement.addEventListener('click', () => {
             timeElement.style.display = timeElement.style.display === 'none' ? 'block' : 'none';
             timeElement.textContent = sender === username
-                ? `${timeString} - ${(messageElement.dataset.status === '1' ? 'Đã xem' : 'Chưa xem')}`
+                ? `${timeString} - ${(messageElement.dataset.status === '1' ? 'Seen' : 'Unseen')}`
                 : timeString;
             messageContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
@@ -302,7 +347,7 @@
         fetch(fileUrl)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Không thể tải file');
+                    throw new Error('Unable to download file');
                 }
                 return response.blob();
             })
@@ -317,7 +362,7 @@
                 URL.revokeObjectURL(downloadUrl);
             })
             .catch(error => {
-                console.error('Lỗi khi tải file:', error);
+                console.error('Error downloading file:', error);
             });
     }
 
@@ -335,12 +380,12 @@
             });
             const data = await response.json();
             if (!data.success) {
-                console.error('Lỗi khi đánh dấu tin nhắn đã xem:', data.message);
+                console.error('Error marking messages as seen:', data.message);
             } else {
                 socket.emit('messages-seen', { from: username, to: currentChatFriend });
             }
         } catch (error) {
-            console.error('Lỗi khi đánh dấu tin nhắn đã xem:', error);
+            console.error('Error marking messages as seen:', error);
         }
     }
 
@@ -360,10 +405,39 @@
         const recipientUsername = data.from;
         if (currentChatFriend !== recipientUsername) return;
 
-        const messageElements = document.querySelectorAll('.message-container.self-container .text-message, .message-container.self-container .file-message');
+        const messageElements = document.querySelectorAll('.message-container.self-container .text-message, .message-container.self-container .file-message, .message-container.self-container .image-message');
         messageElements.forEach((messageElement) => {
             messageElement.dataset.status = '1';
         });
+    });
+
+    // Download Icon in Modal Event Listener
+    downloadModalImage.addEventListener('click', () => {
+        const src = modalImage.src;
+        const filename = src.split('/').pop();
+        downloadFile(filename);
+    });
+
+    // Zoom In Button Event Listener
+    zoomInButton.addEventListener('click', () => {
+        if (currentScale < MAX_SCALE) { // Set maximum zoom level
+            currentScale += SCALE_STEP;
+            modalImage.style.transform = `scale(${currentScale})`;
+        }
+    });
+
+    // Zoom Out Button Event Listener
+    zoomOutButton.addEventListener('click', () => {
+        if (currentScale > MIN_SCALE) { // Set minimum zoom level
+            currentScale -= SCALE_STEP;
+            modalImage.style.transform = `scale(${currentScale})`;
+        }
+    });
+
+    // Reset scale when modal is hidden
+    document.getElementById('imageModal').addEventListener('hidden.bs.modal', () => {
+        currentScale = 1;
+        modalImage.style.transform = `scale(${currentScale})`;
     });
 
 })();

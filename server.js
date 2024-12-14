@@ -30,6 +30,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 // Thêm static cho thư mục img
 app.use('/img', express.static(path.join(__dirname, 'img')));
 
+// Thêm static cho thư mục uploads để phục vụ hình ảnh trực tiếp
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use(express.static('public'));
 app.use(express.json());
 

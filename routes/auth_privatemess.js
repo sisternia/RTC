@@ -22,21 +22,28 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Save a text message or file
+// Save a text message or file/image
 router.post('/private-messages', upload.single('file'), async (req, res) => {
     const { content, user_sent, user_receive, type, size, date_sent } = req.body;
     const file = req.file;
 
     try {
         let savedMessage;
-        if (type === 'file') {
+        if (file) {
+            // Xác định loại tệp tin
+            const mimeType = file.mimetype;
+            let messageType = 'file';
+            if (mimeType.startsWith('image/')) {
+                messageType = 'image';
+            }
+
             // Lưu tên file gốc vào content, tên file đã đổi vào filename
             const originalName = file.originalname;
             const newMessage = new PrivateMessage({
                 content: originalName,
                 user_sent,
                 user_receive,
-                type: 'file',
+                type: messageType,
                 size: (file.size / 1024).toFixed(2) + ' KB',
                 status: 0,
                 date_sent: date_sent || new Date(),
@@ -44,15 +51,18 @@ router.post('/private-messages', upload.single('file'), async (req, res) => {
                 filename: file.filename // Tên file duy nhất trên server
             });
             savedMessage = await newMessage.save();
+
             res.status(200).json({
                 success: true, 
                 message: 'Message has been saved', 
                 data: { 
                     content: savedMessage.content,
-                    filename: savedMessage.filename
+                    filename: savedMessage.filename,
+                    type: savedMessage.type
                 }
             });
         } else {
+            // Lưu tin nhắn văn bản
             const newMessage = new PrivateMessage({
                 content: content,
                 user_sent,
@@ -67,7 +77,7 @@ router.post('/private-messages', upload.single('file'), async (req, res) => {
             res.status(200).json({
                 success: true, 
                 message: 'Message has been saved', 
-                data: { content: savedMessage.content }
+                data: { content: savedMessage.content, type: savedMessage.type }
             });
         }
 

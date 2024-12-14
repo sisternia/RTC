@@ -1,5 +1,4 @@
 // \webrtc\models\PrivateMess.js
-
 const mongoose = require('mongoose');
 
 const PrivateMessageSchema = new mongoose.Schema({
@@ -17,7 +16,7 @@ const PrivateMessageSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['text', 'file'],
+        enum: ['text', 'file', 'image'], // Thêm 'image' vào enum
         default: 'text'
     },
     size: {
@@ -43,4 +42,3 @@ const PrivateMessageSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('PrivateMessage', PrivateMessageSchema);
-

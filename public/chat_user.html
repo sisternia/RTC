@@ -1,5 +1,4 @@
 <!-- \webrtc\public\chat_user.html -->
-
 <div class="chat-container" id="chatContainer">
     <div class="chat-header">
         <span id="chatFriendName">Chat</span>
@@ -9,9 +8,35 @@
     <div class="input-container">
         <!-- Icon added here -->
         <i class="bi bi-folder-symlink icon"></i>
-        <textarea id="chatInput" placeholder="Nhập tin nhắn..." rows="1"></textarea>
-        <button id="sendMessageButton">Gửi</button>
+        <textarea id="chatInput" placeholder="Enter message..." rows="1"></textarea>
+        <button id="sendMessageButton"><i class="bi bi-send"></i></button>
     </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-truncate" id="imageModalLabel">Hình ảnh: </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img src="" id="modalImage" class="img-fluid" alt="Image">
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-light me-2" id="zoomInButton" title="Zoom In">
+            <i class="bi bi-plus-circle"></i>
+        </button>
+        <button type="button" class="btn btn-light me-2" id="zoomOutButton" title="Zoom Out">
+            <i class="bi bi-dash-circle"></i>
+        </button>
+        <button type="button" class="btn btn-primary" id="downloadModalImage" title="Download">
+            <i class="bi bi-download"></i>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -135,6 +160,7 @@
         font-size: 12px;
         color: gray;
     }
+
     .bi-arrow-down-square {
         font-size: 1.5em; /* Adjust size as needed */
         color: #007bff; /* Color for the download icon */
@@ -181,5 +207,53 @@
         background-color: #007bff;
         color: #fff;
         cursor: pointer;
+    }
+
+    /* Image Message Styles */
+    .image-message {
+        max-width: 70%;
+        border-radius: 10px;
+        margin-top: 5px;
+        cursor: pointer;
+    }
+
+    .image-message.self {
+        /* Additional styles for self messages if needed */
+    }
+
+    .image-message.other {
+        /* Additional styles for other messages if needed */
+    }
+
+    /* Modal Image */
+    #modalImage {
+        max-height: 70vh; /* Reduced to accommodate footer */
+        width: auto;
+        transition: transform 0.3s ease;
+        object-fit: contain;
+    }
+
+    /* Zoom Controls in Footer */
+    .modal-footer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-footer .btn {
+        margin: 0 5px;
+    }
+
+    /* Prevent image overflow in modal */
+    .modal-body {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modal-body img {
+        max-width: 100%;
+        max-height: 70vh; /* Adjusted to prevent overflow with footer */
+        display: block;
+        margin: 0 auto;
     }
 </style>
